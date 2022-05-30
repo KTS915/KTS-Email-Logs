@@ -1,5 +1,5 @@
 === Email Logs ===
-Description: Provides an accessible table of contents for posts
+Description: Stores email logs in a custom database table.
 Author: Tim Kaye
 Author URI: https://timkaye.org
 Contributors: KTS915
