@@ -3,7 +3,7 @@
  * Plugin Name: Email Logs
  * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
  * Text Domain: kts_email_logs
@@ -34,10 +34,10 @@ function kts_send_data_to_email_logs_on_success( $args ) { // $mail_data
 		'recipient'		=> sanitize_text_field( $user->display_name ),
 		'email'			=> sanitize_email( $args['to'] ),
 		'subject'		=> sanitize_text_field( $args['subject'] ),
-		'message'		=> wp_filter_post_kses( $args['message'] ),
+		'message'		=> esc_html( preg_replace('~<script[^>]*>.*</script\s*>~is', '', ( $args['message'] ) ) ),
 		'sent'			=> time(),
 		'headers'		=> maybe_serialize( $headers ),
-		'attachments'	=> maybe_serialize( $attachments )
+		'attachments'		=> maybe_serialize( $attachments )
 	);
 
 	$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
