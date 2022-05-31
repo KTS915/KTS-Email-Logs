@@ -182,7 +182,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'subject':
 				return $item[$column_name];
 			case 'message':
-				return htmlspecialchars_decode( $item[$column_name], ENT_QUOTES );
+				return wp_specialchars_decode( $item[$column_name], ENT_QUOTES );
 			case 'headers':
 				$headers = '';
 				if ( ! empty( $item[$column_name] ) ) {
