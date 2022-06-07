@@ -180,20 +180,20 @@ function kts_csv_email_logs() {
 
 		$file = fopen( 'php://output', 'w' );
 
-		$logs = $wpdb->get_results( "SELECT * FROM $table_name", ARRAY_A );
+		$logs = $wpdb->get_results( "SELECT * FROM $table_name" );
 
 		foreach( $logs as $log ) {
 
 			fputcsv( $file, array(
-				$log['message_id'],							
-				$log['status'],					
-				$log['recipient'],							
-				$log['email'],
-				$log['subject'],
-				$log['message'],
-				$log['headers'],
-				$log['attachments'],
-				kts_ts2time( $log['sent'], $timezone )
+				$log->message_id,							
+				$log->status,					
+				$log->recipient,							
+				$log->email,
+				$log->subject,
+				$log->message,
+				$log->headers,
+				$log->attachments,
+				kts_ts2time( $log->sent, $timezone )
 			) );
 		}
 		fclose( $file );
@@ -225,15 +225,15 @@ function kts_csv_email_logs() {
 			$log = KTS_Email_Logs::get_log( $id );
 
 			fputcsv( $file, array(
-				$log['message_id'],							
-				$log['status'],					
-				$log['recipient'],							
-				$log['email'],
-				$log['subject'],
-				$log['message'],
-				$log['headers'],
-				$log['attachments'],
-				kts_ts2time( $log['sent'], $timezone )
+				$log->message_id,							
+				$log->status,					
+				$log->recipient,							
+				$log->email,
+				$log->subject,
+				$log->message,
+				$log->headers,
+				$log->attachments,
+				kts_ts2time( $log->sent, $timezone )
 			) );
 		}
 		fclose( $file );
