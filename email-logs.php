@@ -3,7 +3,9 @@
  * Plugin Name: Email Logs
  * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 0.1.1
+ * Version: 0.1.2
+ * Requires CP: 1.4
+ * Requires PHP: 7.4
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
  * Text Domain: kts_email_logs
