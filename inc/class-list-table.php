@@ -59,6 +59,34 @@ class KTS_Email_Logs extends WP_List_Table {
 	}
 
 	/**
+	 * Retrieve multiple log records.
+	 *
+	 * @param int $id log ID
+	 */
+	public static function get_selected_logs( $ids ) {
+		global $wpdb;		
+		$table_name = $wpdb->prefix . 'kts_email_logs';
+		$count = count( $ids );
+		$imploded = implode( ',', array_fill( 0, $count, '%d' ) );
+
+		$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE message_id IN ($imploded)", $ids );
+
+		return $wpdb->get_results( $sql, ARRAY_A );
+	}
+
+	/**
+	 * Retrieve all log records.
+	 *
+	 * @param int $id log ID
+	 */
+	public static function get_all_logs() {
+		global $wpdb;		
+		$table_name = $wpdb->prefix . 'kts_email_logs';
+	
+		return $wpdb->get_results( "SELECT * FROM $table_name", ARRAY_A );
+	}
+
+	/**
 	 * Delete a log record.
 	 *
 	 * @param int $id log ID
@@ -150,7 +178,7 @@ class KTS_Email_Logs extends WP_List_Table {
 	public function column_default( $item, $column_name ) {
 		$timezone = get_option( 'timezone_string' );
 		$email_logs = get_option( 'email-logs' );
-		$indicator = $email_logs['status'];
+		$indicator = $email_logs && $email_logs['status'] ? $email_logs['status'] : 'symbols';
 
 		switch ( $column_name ) {
 			case 'status':
@@ -182,7 +210,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'subject':
 				return $item[$column_name];
 			case 'message':
-				return wp_specialchars_decode( $item[$column_name], ENT_QUOTES );
+				return apply_filters( 'email_message', $item[$column_name] ) . '<div class="hidden">' . $item[$column_name] . '</div>';
 			case 'headers':
 				$headers = '';
 				if ( ! empty( $item[$column_name] ) ) {
@@ -200,7 +228,10 @@ class KTS_Email_Logs extends WP_List_Table {
 				}
 				return $attachments;
 			case 'sent':
-				return kts_ts2time( $item[$column_name], $timezone );
+				$date = new DateTime();
+				$date->setTimestamp( $item[$column_name] );
+				$date->setTimezone( new DateTimeZone( $timezone ) );
+				return $date->format( 'l, F jS, Y \a\t g:ia' );
 			case 'message_id':
 				return absint( $item[$column_name] );
 			default:
@@ -236,8 +267,8 @@ class KTS_Email_Logs extends WP_List_Table {
 
 		$page = esc_attr( $_GET['page'] );
 		$message_id = absint( $item['message_id'] );
-		$simple_nonce = WPSimpleNonce::createNonce( 'simple_kts_email_nonce' );
-		$nonce = $simple_nonce['name'] . '-' . $simple_nonce['value'];
+		$real_nonce = cp_set_nonce( 'real_kts_email_nonce' );
+		$nonce = $real_nonce['name'] . '-' . $real_nonce['value'];
 
 		$actions = array(
 
@@ -456,46 +487,51 @@ class KTS_Email_Logs extends WP_List_Table {
 
 		$action = $this->current_action();
 
-		if ( strpos( $action, 'bulk-' ) !== false || ! empty( $_GET['s'] ) || $action === 'export-all-logs' ) {
+		if ( $action !== 'bulk-export' ) {
 
-			// Verify true nonce using WPSimpleNonce
-			$simple_nonce = sanitize_key( $_GET['simple_nonce'] );
-			$exploded = $checkNonce = false;
-			if ( strpos( $simple_nonce, '-' ) !== false ) {
-				$exploded = explode( '-', $simple_nonce );
-				$checkNonce = WPSimpleNonce::checkNonce( $exploded[0], $exploded[1] );
+			 if ( strpos( $action, 'bulk-' ) !== false || ! empty( $_GET['s'] ) ) {
+
+				# Verify true nonce using Real Nonce
+				$real_nonce = sanitize_key( $_GET['real_nonce'] );
+				$exploded = $check_nonce = false;
+				if ( strpos( $real_nonce, '-' ) !== false ) {
+					$exploded = explode( '-', $real_nonce );
+					$check_nonce = cp_check_nonce( $exploded[0], $exploded[1] );
+				}
+
+				if ( in_array( false, [$exploded, $check_nonce] ) ) {
+					echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without an appropriate nonce.</p></div>';
+					return;
+				}
+
+				if ( ! empty( $_GET['email_logs'] ) ) {
+					$ids = array_map( 'absint', $_GET['email_logs'] );
+					$count = count( $ids ) > 1 ? count( $ids ) . ' logs' : '1 log';
+				}
+
 			}
 
-			if ( in_array( false, [$exploded, $checkNonce] ) ) {
-				echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without nonces.</p></div>';
-				return;
-			}
+			elseif ( $_GET['action'] !== 'export-all-logs' ) {
 
-			if ( ! empty( $_GET['email_logs'] ) ) {
-				$ids = array_map( 'absint', $_GET['email_logs'] );
-				$count = count( $ids ) > 1 ? count( $ids ) . ' logs' : '1 log';
+				# Verify true nonce using Real Nonce
+				$nonce = sanitize_key( $_GET['_wpnonce'] );
+				$exploded = $check_nonce = false;
+				if ( strpos( $nonce, '-' ) !== false ) {
+					$exploded = explode( '-', $nonce );
+					$check_nonce = cp_check_nonce( $exploded[0], $exploded[1] );
+				}
+
+				if ( in_array( false, [$exploded, $check_nonce] ) ) {
+					echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without a nonce.</p></div>';
+					return;
+				}
+
+				$id = ! empty( $_GET['log'] ) ? absint( $_GET['log'] ) : '';
+
 			}
 
 		}
 
-		else {
-
-			// Verify true nonce using WPSimpleNonce
-			$nonce = sanitize_key( $_GET['_wpnonce'] );
-			$exploded = $checkNonce = false;
-			if ( strpos( $nonce, '-' ) !== false ) {
-				$exploded = explode( '-', $nonce );
-				$checkNonce = WPSimpleNonce::checkNonce( $exploded[0], $exploded[1] );
-			}
-
-			if ( in_array( false, [$exploded, $checkNonce] ) ) {
-				echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without a nonce.</p></div>';
-				return;
-			}
-
-			$id = ! empty( $_GET['log'] ) ? absint( $_GET['log'] ) : '';
-
-		}
 
 		if ( $action ) {
 			switch ( $action ) {
@@ -520,8 +556,8 @@ class KTS_Email_Logs extends WP_List_Table {
 						$log['email'],
 						$log['subject'],
 						$log['message'],
-						maybe_unserialize( $log['headers'] ),
-						maybe_unserialize( $log['attachments'] )
+						$log['headers'],
+						$log['attachments']
 					);
 
 					echo '<div class="notice notice-success is-dismissible"><p>Email ID ' . $id . ' resent.</p></div>';
@@ -534,8 +570,8 @@ class KTS_Email_Logs extends WP_List_Table {
 							$log['email'],
 							$log['subject'],
 							$log['message'],
-							maybe_unserialize( $log['headers'] ),
-							maybe_unserialize( $log['attachments'] )
+							$log['headers'],
+							$log['attachments']
 						);
 					}
 
