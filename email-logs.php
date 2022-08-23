@@ -1,13 +1,12 @@
 <?php
 /**
  * Plugin Name: Email Logs
- * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 0.1.2
- * Requires CP: 1.4
- * Requires PHP: 7.4
+ * Version: 0.2.0
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
+ * Requires CP: 1.4
+ * Requires PHP: 7.4
  * Text Domain: kts_email_logs
 */
 
@@ -32,14 +31,14 @@ function kts_send_data_to_email_logs_on_success( $args ) { // $mail_data
 	$attachments = is_array( $args['attachments'] ) ? array_map( 'esc_url_raw', $args['attachments'] ) : [esc_url_raw( $args['attachments'] )];
 
 	$email_array = array(
-		'status'		=> 1,
-		'recipient'		=> sanitize_text_field( $user->display_name ),
-		'email'			=> sanitize_email( $args['to'] ),
-		'subject'		=> sanitize_text_field( $args['subject'] ),
-		'message'		=> esc_html( preg_replace('~<script[^>]*>.*</script\s*>~is', '', ( $args['message'] ) ) ),
-		'sent'			=> time(),
-		'headers'		=> maybe_serialize( $headers ),
-		'attachments'		=> maybe_serialize( $attachments )
+		'status'				=> 1,
+		'recipient'			=> sanitize_text_field( $user->display_name ),
+		'email'				=> sanitize_email( $args['to'] ),
+		'subject'			=> sanitize_text_field( $args['subject'] ),
+		'message'			=> esc_html( preg_replace('~<script[^>]*>.*</script\s*>~is', '', ( $args['message'] ) ) ),
+		'sent'				=> time(),
+		'headers'			=> maybe_serialize( $headers ),
+		'attachments'	=> maybe_serialize( $attachments )
 	);
 
 	$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
@@ -113,9 +112,9 @@ add_action( 'admin_menu', 'kts_menu_email_logs' );
 function kts_list_email_logs() {
 	$logs = new KTS_Email_Logs();
 	$logs->prepare_items();
-	
-	$simple_nonce = WPSimpleNonce::createNonce( 'simple_kts_email_nonce' );
-	$nonce = $simple_nonce['name'] . '-' . $simple_nonce['value'];
+
+	$real_nonce = cp_set_nonce( 'real_kts_email_nonce' );
+	$nonce = $real_nonce['name'] . '-' . $real_nonce['value'];
 	?>
 	<div class="wrap">
 		<h1 class="wp-heading-inline">Email Logs</h1>
@@ -132,11 +131,11 @@ function kts_list_email_logs() {
 			/*
 			 * Ensures the current page reloads after bulk action or search submitted
 			 * 
-			 * Also submits true nonce with form using WPSimpleNonce 
+			 * Also submits true nonce with form using Real Nonce 
 			 */
 			?>
 			<input type="hidden" name="page" value="email-logs">
-			<input type="hidden" name="simple_nonce" value="<?php echo $nonce; ?>">
+			<input type="hidden" name="real_nonce" value="<?php echo $nonce; ?>">
 			<?php
 			$logs->display();
 			?>
@@ -164,86 +163,99 @@ function kts_screen_option_email_logs() {
 }
 
 
-# CSV EXPORT
+# CSV EXPORT OF ALL OR MULTIPLE SELECTED ERROR LOGS
 function kts_csv_email_logs() {
 
-	if ( isset( $_GET['action'] ) && $_GET['action'] === 'export-all-logs' ) {
-
-		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' ); 
-		header( 'Content-Description: File Transfer' ); 
-		header( 'Content-type: text/csv' );
-		header( 'Content-Disposition: attachment; filename="logs.csv"' );
-		header( 'Pragma: public' );
-		header( 'Expires: 0' );
-
-		global $wpdb;		
-		$table_name = $wpdb->prefix . 'kts_email_logs';
-		$timezone = get_option( 'timezone_string' );
-
-		$file = fopen( 'php://output', 'w' );
-
-		$logs = $wpdb->get_results( "SELECT * FROM $table_name" );
-
-		foreach( $logs as $log ) {
-
-			fputcsv( $file, array(
-				$log->message_id,							
-				$log->status,					
-				$log->recipient,							
-				$log->email,
-				$log->subject,
-				$log->message,
-				$log->headers,
-				$log->attachments,
-				kts_ts2time( $log->sent, $timezone )
-			) );
-		}
-		fclose( $file );
-		exit;
-
+	# Bail if no action set
+	if ( empty( $_GET['action'] ) ) {
+		return;
 	}
 
-	elseif ( isset( $_GET['action'] ) && $_GET['action'] === 'bulk-export' ) {
-		if ( empty( $_GET['email_logs'] ) ) {
-			return;
-		}
+	# Bail if the action is neither of these
+	if ( ! in_array( $_GET['action'], ['export-all-logs', 'bulk-export'] ) ) {
+		return;
+	}
 
-		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' ); 
-		header( 'Content-Description: File Transfer' ); 
-		header( 'Content-type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="email-log-' . date( 'Y-m-d' ) . '.csv"' );
-		header( 'Pragma: public' );
-		header( 'Expires: 0' );
+	# Bail if the action is bulk-export, but no IDs have been post in the $_GET variable
+	if ( $_GET['action'] === 'bulk-export' && empty( $_GET['email_logs'] ) ) {
+		return;
+	}
 
-		global $wpdb;		
-		$table_name = $wpdb->prefix . 'kts_email_logs';
-		$timezone = get_option( 'timezone_string' );
+	# Verify true nonce using Real Nonce
+	$real_nonce = sanitize_key( $_GET['real_nonce'] );
+	$exploded = $check_nonce = false;
+	if ( strpos( $real_nonce, '-' ) !== false ) {
+		$exploded = explode( '-', $real_nonce );
+		$check_nonce = cp_check_nonce( $exploded[0], $exploded[1] );
+	}
 
-		$file = fopen( 'php://output', 'w' );
+	if ( in_array( false, [$exploded, $check_nonce] ) ) {
+		echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without a suitable nonce.</p></div>';
+		return;
+	}
 
+	# Get specified logs
+	$logs = [];
+	if ( $_GET['action'] === 'export-all-logs' ) {
+		$logs = KTS_Email_Logs::get_all_logs();
+	}
+	else {
 		$ids = array_map( 'absint', $_GET['email_logs'] );
+		$logs = KTS_Email_Logs::get_selected_logs( $ids );
+	}
 
-		foreach( $ids as $id ) {
-			$log = KTS_Email_Logs::get_log( $id );
+	# Just in case logs are empty, bail out
+	if ( empty( $logs) ) {
+		return;
+	}
 
-			fputcsv( $file, array(
-				$log->message_id,							
-				$log->status,					
-				$log->recipient,							
-				$log->email,
-				$log->subject,
-				$log->message,
-				$log->headers,
-				$log->attachments,
-				kts_ts2time( $log->sent, $timezone )
-			) );
-		}
-		fclose( $file );
-		exit;
+	# Set details for the redirect to force download and name of CSV file
+	header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' ); 
+	header( 'Content-Description: File Transfer' ); 
+	header( 'Content-type: text/csv' );
+	header( 'Content-Disposition: attachment; filename="email-error-logs-' . date( 'Y-m-d' ) . '.csv"' );
+	header( 'Pragma: public' );
+	header( 'Expires: 0' );
+
+	# Create the CSV file
+	$timezone = get_option( 'timezone_string' );
+	$file = fopen( 'php://output', 'w' );
+
+	foreach( $logs as $log ) {
+
+		fputcsv( $file, array(
+			$log['message_id'],							
+			$log['status'],					
+			$log['recipient'],							
+			$log['email'],
+			$log['subject'],
+			apply_filters( 'email_message_csv', $log['message'] ),
+			implode( '; ', maybe_unserialize( $log['headers'] ) ),
+			implode( '; ', maybe_unserialize( $log['attachments'] ) ),
+			kts_ts2time( $log['sent'], $timezone )
+		) );
 
 	}
 
+	fclose( $file );
+	exit;
 }
+
+
+/* PARSE HTML EMAIL MESSAGE */
+function kts_parse_html_message( $message ) {
+	$html = strip_tags( wp_specialchars_decode( $message, ENT_QUOTES ) );
+	$stripped = preg_replace('~\.\s~', '', $html, 1 );
+	return str_replace( 'TryFile', '', $stripped );
+}
+add_filter( 'email_message', 'kts_parse_html_message' );
+
+function kts_parse_html_message_in_csv_export( $message ) {
+	preg_match_all( '~<p>(.*?)<\/p>~s', wp_specialchars_decode( $message, ENT_QUOTES ), $match );
+	return implode( ' ', $match[1] );
+}
+add_filter( 'email_message_csv', 'kts_parse_html_message_in_csv_export' );
+
 
 # DELETE OLD LOGS
 function kts_delete_old_email_logs() {
@@ -274,14 +286,4 @@ function kts_email_logs_cronjobs() {
 		wp_schedule_event( time(), 'hourly', 'kts_email_logs_hook' );
 	}
 }	
-add_action( 'init', 'kts_email_logs_cronjobs' );
-
-
-# TIME FORMATTING HELPER FUNCTION
-# https://stackoverflow.com/questions/20288789/php-date-with-timezone
-function kts_ts2time( $timestamp, $timezone ) { // unix time, timezone
-	$date = new DateTime();
-	$date->setTimestamp( $timestamp );
-	$date->setTimezone( new DateTimeZone( $timezone ) );
-	return $date->format( 'l, F jS, Y \a\t g:ia' );
-}
+register_activation_hook( __FILE__, 'kts_email_logs_cronjobs' );
