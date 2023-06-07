@@ -1,12 +1,11 @@
 <?php
 /**
  * Plugin Name: Email Logs
+ * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 0.2.0
+ * Version: 0.3
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
- * Requires CP: 1.4
- * Requires PHP: 7.4
  * Text Domain: kts_email_logs
 */
 
@@ -22,67 +21,94 @@ require_once __DIR__ . '/inc/UpdateClient.class.php';
 register_activation_hook( __FILE__, 'kts_email_logs_create_db' );
 
 # SEND DATA TO EMAIL LOGS
-function kts_send_data_to_email_logs_on_success( $args ) { // $mail_data
-	global $wpdb, $kts_email_id;
+function kts_send_data_to_email_logs_on_success( $mail_data ) { // $mail_data
+	global $wpdb;
 	$table_name = $wpdb->prefix . 'kts_email_logs';
 
-	$user = get_user_by( 'email', $args['to'] );
-	$headers = is_array( $args['headers'] ) ? array_map( 'sanitize_text_field', $args['headers'] ) : [sanitize_text_field( $args['headers'] )];
-	$attachments = is_array( $args['attachments'] ) ? array_map( 'esc_url_raw', $args['attachments'] ) : [esc_url_raw( $args['attachments'] )];
+	$emails = '';
+	$users = '';
+	foreach( $mail_data['to'] as $key => $email ) {
+		if ( $key === 0 ) {
+			$emails .= sanitize_email( $email );
+		}
+		else {
+			$emails .= ', ' . sanitize_email( $email );
+		}
+
+		$user = get_user_by( 'email', $email );
+		if ( ! empty( $user ) ) {
+			if ( empty( $users ) ) {
+				$users .= sanitize_text_field( $user->display_name );
+			}
+			else {
+				$users .= ', ' . sanitize_text_field( $user->display_name );
+			}
+		}
+	}
+
+	$headers = is_array( $mail_data['headers'] ) ? array_map( 'sanitize_text_field', $mail_data['headers'] ) : [sanitize_text_field( $mail_data['headers'] )];
+
+	$attachments = is_array( $mail_data['attachments'] ) ? array_map( 'esc_url_raw', $mail_data['attachments'] ) : [esc_url_raw( $mail_data['attachments'] )];
 
 	$email_array = array(
-		'status'				=> 1,
-		'recipient'			=> sanitize_text_field( $user->display_name ),
-		'email'				=> sanitize_email( $args['to'] ),
-		'subject'			=> sanitize_text_field( $args['subject'] ),
-		'message'			=> esc_html( preg_replace('~<script[^>]*>.*</script\s*>~is', '', ( $args['message'] ) ) ),
-		'sent'				=> time(),
-		'headers'			=> maybe_serialize( $headers ),
-		'attachments'	=> maybe_serialize( $attachments )
+		'status'		=> 1,
+		'recipient'		=> $users ?: '',
+		'email'			=> $emails,
+		'subject'		=> sanitize_text_field( $mail_data['subject'] ),
+		'message'		=> filter_var( $mail_data['message'], FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
+		'sent'			=> time(),
+		'headers'		=> maybe_serialize( $headers ),
+		'attachments'	=> maybe_serialize( $attachments ),
 	);
 
 	$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
-
-	$kts_email_id = $wpdb->insert_id;
-
-	return $args;
 }
-add_filter( 'wp_mail', 'kts_send_data_to_email_logs_on_success' );
-// add_action( 'wp_mail_succeeded', 'kts_send_data_to_email_logs_on_success' ); // WP
+add_action( 'wp_mail_succeeded', 'kts_send_data_to_email_logs_on_success' ); // WP
 
 
 function kts_send_data_to_email_logs_on_failure( $error ) {
-
-	global $wpdb, $kts_email_id;
+	global $wpdb;
 	$table_name = $wpdb->prefix . 'kts_email_logs';
 
-	$error_message = $error->errors['wp_mail_failed'][0];
+	$emails = '';
+	$users = '';
+	foreach( $error->error_data['wp_mail_failed']['to'] as $key => $email ) {
+		if ( $key === 0 ) {
+			$emails .= sanitize_email( $email );
+		}
+		else {
+			$emails .= ', ' . sanitize_email( $email );
+		}
 
-	$email = $error->error_data['wp_mail_failed']['to'][0];
-	$user = get_user_by( 'email', $email );
+		$user = get_user_by( 'email', $email );
+		if ( ! empty( $user ) ) {
+			if ( empty( $users ) ) {
+				$users .= sanitize_text_field( $user->display_name );
+			}
+			else {
+				$users .= ', ' . sanitize_text_field( $user->display_name );
+			}
+		}
+	}
 
-	//waiting for 'wp_mail_succeeded' hook to be added to CP
-	//$headers = is_array( $args['headers'] ) ? array_map( 'sanitize_text_field', $args['headers'] ) : [sanitize_text_field( $args['headers'] )];
-	//$attachments = is_array( $args['attachments'] ) ? array_map( 'esc_url_raw', $args['attachments'] ) : [esc_url_raw( $args['attachments'] )];
+	$headers = is_array( $error->error_data['wp_mail_failed']['headers'] ) ? array_map( 'sanitize_text_field', $error->error_data['wp_mail_failed']['headers'] ) : [sanitize_text_field( $error->error_data['wp_mail_failed']['headers'] )];
+
+	$attachments = is_array( $error->error_data['wp_mail_failed']['attachments'] ) ? array_map( 'esc_url_raw', $error->error_data['wp_mail_failed']['attachments'] ) : [esc_url_raw( $error->error_data['wp_mail_failed']['attachments'] )];
 
 	$email_array = array(
-		//'message_id'=> $kts_email_id,
-		'status'	=> 0,
-		//'recipient'	=> sanitize_text_field( $user->display_name ),
-		//'email'		=> sanitize_email( $email ),
-		//'subject'	=> sanitize_text_field( $error->error_data['wp_mail_failed']['subject'] ),
-		//'message'	=> wp_filter_post_kses( $error->error_data['wp_mail_failed']['message'] ),
-		//'sent'		=> time(),		
-		//'headers'		=> maybe_serialize( $headers ),
-		//'attachments'	=> maybe_serialize( $attachments ),
-		'error'		=> $error_message,
-		'exception'	=> $error->error_data['wp_mail_failed']['phpmailer_exception_code']
+		'status'		=> 0,
+		'recipient'		=> $users ?: '',
+		'email'			=> $emails,
+		'subject'		=> sanitize_text_field( $error->error_data['wp_mail_failed']['subject'] ),
+		'message'		=> filter_var( $error->error_data['wp_mail_failed']['message'], FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
+		'sent'			=> time(),
+		'headers'		=> maybe_serialize( $headers ),
+		'attachments'	=> maybe_serialize( $attachments ),
+		'error'			=> sanitize_text_field( $error->errors['wp_mail_failed'][0] ),
+		'exception'		=> absint( $error->error_data['wp_mail_failed']['phpmailer_exception_code'] ),
 	);
 
-	$where = ['message_id' => $kts_email_id];
-
-	//$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
-	$wpdb->update( $table_name, $email_array, $where ); // $wpdb->update sanitizes data
+	$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
 }
 add_action( 'wp_mail_failed', 'kts_send_data_to_email_logs_on_failure' );
 
@@ -219,20 +245,49 @@ function kts_csv_email_logs() {
 
 	# Create the CSV file
 	$timezone = get_option( 'timezone_string' );
+
+	$headers = ['Message ID', 'Status', 'Recipient', 'Email', 'Subject', 'Message', 'Headers', 'Attachments', 'Date Sent'];
+
 	$file = fopen( 'php://output', 'w' );
+
+	fputcsv( $file, $headers );
 
 	foreach( $logs as $log ) {
 
+		$headers = '';
+		if ( ! empty( $log['headers'] ) ) {
+			foreach( maybe_unserialize( $log['headers'] ) as $key => $header ) {
+				if ( $key === 0 ) {
+					$headers .= $header;
+				}
+				else {
+					$headers .= ', ' . $header;
+				}
+			}
+		}
+
+		$attachments = '';
+		if ( ! empty( $log['attachments'] ) ) {
+			foreach( maybe_unserialize( $log['attachments'] ) as $key => $attachment ) {
+				if ( $key === 0 ) {
+					$attachments .= $attachment;
+				}
+				else {
+					$attachments .= ', ' . basename( $attachment );
+				}
+			}
+		}
+
 		fputcsv( $file, array(
-			$log['message_id'],							
-			$log['status'],					
-			$log['recipient'],							
-			$log['email'],
-			$log['subject'],
+			absint( $log['message_id'] ),
+			esc_html( $log['status'] ),
+			esc_html( $log['recipient'] ),
+			esc_html( $log['email'] ),
+			esc_html( $log['subject'] ),
 			apply_filters( 'email_message_csv', $log['message'] ),
-			implode( '; ', maybe_unserialize( $log['headers'] ) ),
-			implode( '; ', maybe_unserialize( $log['attachments'] ) ),
-			kts_ts2time( $log['sent'], $timezone )
+			esc_html( $headers ),
+			esc_html( $attachments ),
+			kts_wp_date ( 'l, F jS, Y \a\t g:ia', $log['sent'] ),
 		) );
 
 	}
@@ -244,23 +299,29 @@ function kts_csv_email_logs() {
 
 /* PARSE HTML EMAIL MESSAGE */
 function kts_parse_html_message( $message ) {
-	$html = strip_tags( wp_specialchars_decode( $message, ENT_QUOTES ) );
-	$stripped = preg_replace('~\.\s~', '', $html, 1 );
-	return str_replace( 'TryFile', '', $stripped );
+	return strip_tags( str_replace( ['</p>', '<br>'], ['</p> ', ' '], wp_specialchars_decode( $message, ENT_QUOTES ) ) );
 }
 add_filter( 'email_message', 'kts_parse_html_message' );
 
 function kts_parse_html_message_in_csv_export( $message ) {
 	preg_match_all( '~<p>(.*?)<\/p>~s', wp_specialchars_decode( $message, ENT_QUOTES ), $match );
-	return implode( ' ', $match[1] );
+	return strip_tags( implode( ' ', $match[1] ) );
 }
 add_filter( 'email_message_csv', 'kts_parse_html_message_in_csv_export' );
+
+function kts_wp_date( $format, $timestamp ) {
+	$timezone = get_option( 'timezone_string' );
+	$date = new DateTime();
+	$date->setTimestamp( $timestamp );
+	$date->setTimezone( new DateTimeZone( $timezone ) );
+	return $date->format( $format );
+}
 
 
 # DELETE OLD LOGS
 function kts_delete_old_email_logs() {
 
-	global $wpdb;		
+	global $wpdb;
 	$table_name = $wpdb->prefix . 'kts_email_logs';
 	$email_logs = get_option( 'email-logs' );
 	
