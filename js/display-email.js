@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			let emailTR = shows[i].closest('tr');
 
 			document.getElementById('modal-1-title').innerHTML = emailTR.querySelector('.subject').innerHTML;
-			document.getElementById('modal-1-content').innerHTML = emailTR.querySelector('.message').innerHTML;
+			document.getElementById('modal-1-content').innerHTML = emailTR.querySelector('.message .hidden').innerText;
 			//document.getElementById('modal-1-headers').innerHTML = 'Additional Headers: <pre>' + emailTR.headers + '</pre>';
 		});
 	}
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		MicroModal.init({
 			onClose: modal => {
 				document.getElementById('modal-1-title').innerHTML = '';
-				document.getElementById('modal-1-content').innerHTML = '';				
+				document.getElementById('modal-1-content').innerHTML = '';
 				document.getElementById('modal-1-headers').innerHTML = '';
 			},
 			disableScroll: true,
