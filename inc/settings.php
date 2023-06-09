@@ -84,7 +84,7 @@ function kts_email_logs_sanitize_options_array( $inputs_array ) {
 /* CHOOSE STATUS INDICATOR */
 function kts_email_logs_status_render() {
 
-	$email_logs = get_option( 'email-logs' );
+	$email_logs = (array) get_option( 'email-logs' );
 
 	# Set default indicator to colored dot
 	$status_options = array( 'colors', 'symbols', 'text' );
@@ -117,7 +117,7 @@ function kts_email_logs_status_render() {
 /* CHOOSE LENGTH OF TIME TO STORE LOGS */
 function kts_email_logs_storage_render() {
 
-	$email_logs = get_option( 'email-logs' );
+	$email_logs = (array) get_option( 'email-logs' );
 
 	# Set default storage time to one week
 	$storage_options = array( 604800, 1209600, 1814400, 2419200, 15780000 );
