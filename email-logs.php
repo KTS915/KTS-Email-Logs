@@ -3,7 +3,7 @@
  * Plugin Name: Email Logs
  * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 0.3
+ * Version: 0.4.0
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
  * Text Domain: kts_email_logs
@@ -13,9 +13,6 @@
 require_once __DIR__ . '/inc/class-list-table.php'; // extends the WP_List_Table class
 require_once __DIR__ . '/inc/database.php'; // creates custom database table
 require_once __DIR__ . '/inc/settings.php'; // enables changes of settings for this plugin
-
-/* ENABLE UPDATING MECHANISM */
-require_once __DIR__ . '/inc/UpdateClient.class.php';
 
 /* FIRE HOOK FOR DATABASE CREATION */
 register_activation_hook( __FILE__, 'kts_email_logs_create_db' );
@@ -57,8 +54,8 @@ function kts_send_data_to_email_logs_on_success( $mail_data ) { // $mail_data
 		'subject'		=> sanitize_text_field( $mail_data['subject'] ),
 		'message'		=> filter_var( $mail_data['message'], FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
 		'sent'			=> time(),
-		'headers'		=> maybe_serialize( $headers ),
-		'attachments'	=> maybe_serialize( $attachments ),
+		'headers'		=> json_encode( $headers ),
+		'attachments'	=> json_encode( $attachments ),
 	);
 
 	$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
@@ -102,8 +99,8 @@ function kts_send_data_to_email_logs_on_failure( $error ) {
 		'subject'		=> sanitize_text_field( $error->error_data['wp_mail_failed']['subject'] ),
 		'message'		=> filter_var( $error->error_data['wp_mail_failed']['message'], FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
 		'sent'			=> time(),
-		'headers'		=> maybe_serialize( $headers ),
-		'attachments'	=> maybe_serialize( $attachments ),
+		'headers'		=> json_encode( $headers ),
+		'attachments'	=> json_encode( $attachments ),
 		'error'			=> sanitize_text_field( $error->errors['wp_mail_failed'][0] ),
 		'exception'		=> absint( $error->error_data['wp_mail_failed']['phpmailer_exception_code'] ),
 	);
@@ -256,7 +253,7 @@ function kts_csv_email_logs() {
 
 		$headers = '';
 		if ( ! empty( $log['headers'] ) ) {
-			foreach( maybe_unserialize( $log['headers'] ) as $key => $header ) {
+			foreach( json_decode( $log['headers'] ) as $key => $header ) {
 				if ( $key === 0 ) {
 					$headers .= $header;
 				}
@@ -268,7 +265,7 @@ function kts_csv_email_logs() {
 
 		$attachments = '';
 		if ( ! empty( $log['attachments'] ) ) {
-			foreach( maybe_unserialize( $log['attachments'] ) as $key => $attachment ) {
+			foreach( json_decode( $log['attachments'] ) as $key => $attachment ) {
 				if ( $key === 0 ) {
 					$attachments .= $attachment;
 				}
@@ -323,7 +320,7 @@ function kts_delete_old_email_logs() {
 
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'kts_email_logs';
-	$email_logs = get_option( 'email-logs' );
+	$email_logs = (array) get_option( 'email-logs' );
 	
 	# Set length of time before deletion (with default of one week)
 	$storage = WEEK_IN_SECONDS;
