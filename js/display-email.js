@@ -1,33 +1,47 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener( 'DOMContentLoaded', function() {
 	
-	const shows = document.querySelectorAll('.email-show');
-	for ( let i = 0, n = shows.length; i < n; i++ ) {
-		shows[i].addEventListener('click', function(e) {
+	const dialog = document.getElementById( 'email-details' );
+
+	const shows = document.querySelectorAll( '.email-show' );
+	shows.forEach( function( show ) {
+		show.addEventListener( 'click', function( e ) {
 			e.preventDefault();
-			let emailTR = shows[i].closest('tr');
+			let emailTR = show.closest( 'tr' );
 
-			document.getElementById('modal-1-title').innerHTML = emailTR.querySelector('.subject').innerHTML;
-			document.getElementById('modal-1-content').innerHTML = emailTR.querySelector('.message .hidden').innerText;
+			document.getElementById( 'modal-1-title' ).innerHTML = emailTR.querySelector( '.subject' ).innerHTML;
+			document.getElementById( 'modal-1-content' ).innerHTML = emailTR.querySelector( '.message .hidden' ).innerText;
 			//document.getElementById('modal-1-headers').innerHTML = 'Additional Headers: <pre>' + emailTR.headers + '</pre>';
-		});
-	}
-	
-	try {
-		
-		MicroModal.init({
-			onClose: modal => {
-				document.getElementById('modal-1-title').innerHTML = '';
-				document.getElementById('modal-1-content').innerHTML = '';
-				document.getElementById('modal-1-headers').innerHTML = '';
-			},
-			disableScroll: true,
-			awaitOpenAnimation: true
-		});
-		
-	}
 
-	catch(e) {
-		console.log('Micromodal error: ', e);
-	}
+			dialog.showModal();
+		} );
+	} );
+
+	const closeButtons = dialog.querySelectorAll( 'button' );
+	closeButtons.forEach( function( button ) {
+		button.addEventListener( 'click', function() {
+			dialog.close();
+			document.getElementById( 'modal-1-title' ).innerHTML = '';
+			document.getElementById( 'modal-1-content' ).innerHTML = '';
+			//document.getElementById( 'modal-1-headers' ).innerHTML = '';
+		} );
+	} );
 	
-});
+	// Get first and last tabbable elements
+	const firstTabbable = document.getElementById( 'modal-close' );
+	const lastTabbable = document.getElementById( 'modal-btn' );
+
+	// Constrain tabbing within the modal dialog
+	dialog.addEventListener( 'keydown', function( event ) {
+		if ( 'Tab' !== event.key ) {
+			return;
+		}
+
+		if ( lastTabbable === event.target && ! event.shiftKey ) {
+			event.preventDefault();
+			firstTabbable.focus();
+		} else if ( firstTabbable === event.target && event.shiftKey ) {
+			event.preventDefault();
+			lastTabbable.focus();
+		}
+	} );
+} );
