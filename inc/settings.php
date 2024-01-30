@@ -90,7 +90,8 @@ function kts_email_logs_status_render() {
 	$status_options = array( 'colors', 'symbols', 'text' );
 	if ( empty( $email_logs ) || empty( $email_logs['status'] ) || ! in_array( $email_logs['status'], $status_options ) ) {
 		$email_logs['status'] = 'colors';
-	} ?>
+	}
+	?>
 
 	<fieldset>
 		<label>
@@ -111,7 +112,9 @@ function kts_email_logs_status_render() {
 			<input type="radio" name="email-logs[status]" value="text" <?php checked( $email_logs['status'], 'text' ); ?>>
 			<span class=""><?php _e( 'Text' ); ?></span>
 		</label>
-	</fieldset> <?php
+	</fieldset>
+
+	<?php
 }
 
 /* CHOOSE LENGTH OF TIME TO STORE LOGS */
@@ -124,7 +127,8 @@ function kts_email_logs_storage_render() {
 	if ( empty( $email_logs ) || empty( $email_logs['storage'] ) || ! in_array( $email_logs['timescale'], $storage_options ) ) {
 		$email_logs['storage'] = 1;
 		$email_logs['timescale'] = 604800;
-	} ?>
+	}
+	?>
 
 	<fieldset>
 		<label>
@@ -155,10 +159,13 @@ function kts_email_logs_storage_render() {
 			</span><?php _e( ' old', 'kts_email_logs' ); ?></span>
 
 		</label>
-	</fieldset> <?php
+	</fieldset>
+
+	<?php
 }
 
-function kts_email_logs_settings_setup() { ?>
+function kts_email_logs_settings_setup() {
+	?>
 
 	<div class="wrap">
 		<form action='options.php' method='post'>
@@ -170,5 +177,7 @@ function kts_email_logs_settings_setup() { ?>
 			submit_button(); ?>
 
 		</form>
-	</div> <?php
+	</div>
+
+	<?php
 }
