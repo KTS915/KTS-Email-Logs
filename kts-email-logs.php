@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: Email Logs
+ * Plugin Name: KTS Email Logs
  * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 0.4.0
+ * Version: 1.0.0
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
  * Text Domain: kts_email_logs
