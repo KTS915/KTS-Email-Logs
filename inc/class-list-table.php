@@ -39,9 +39,8 @@ class KTS_Email_Logs extends WP_List_Table {
 	
 	/* ENQUEUE CSS AND JAVASCRIPT */
 	function enqueue_scripts() {
-		wp_enqueue_style( 'micromodal-css', plugins_url( 'css/micromodal.css', dirname( __FILE__ ) ) );
-		wp_enqueue_script( 'micromodal-js', plugins_url( 'js/micromodal.min.js', dirname( __FILE__ ) ), null, null, true );
-		wp_enqueue_script( 'display-email', plugins_url( 'js/display-email.js', dirname( __FILE__ ) ), array( 'micromodal-js' ), null, true );
+		wp_enqueue_style( 'dialog-css', plugins_url( 'css/dialog.css', dirname( __FILE__ ) ) );
+		wp_enqueue_script( 'display-email', plugins_url( 'js/display-email.js', dirname( __FILE__ ) ), array(), null, true );
 	}
 
 	/**
@@ -295,31 +294,28 @@ class KTS_Email_Logs extends WP_List_Table {
 
 		}
 
-		elseif ( $which === 'bottom' ) { // modal (to be filled by JavaScript) ?>
+		elseif ( $which === 'bottom' ) { // modal (to be filled by JavaScript)
+		?>
+			
+			<dialog id="email-details">
 
-			<div class="modal micromodal-slide" id="modal-1" aria-hidden="true">
+				<header class="modal-header">
+					<h2 id="modal-1-title"></h2>
+					<button type="button" id="modal-close" class="modal-close" aria-label="Close modal" value="close"></button>
+				</header>
 
-				<div class="modal__overlay" tabindex="-1" data-micromodal-close>
+				<div class="modal-content-content">
+					<div id="modal-1-content" class="modal-content"></div>
+					<p id="modal-1-headers"></p>
 
-					<div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
-
-						<header class="modal__header">
-							<h2 id="modal-1-title"></h2>
-							<button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
-						</header>
-
-						<div class="modal-content-content">
-							<div id="modal-1-content" class="modal__content"></div>
-							<p id="modal-1-headers"></p>
-
-							<footer class="modal__footer">
-								<button class="modal__btn" data-micromodal-close aria-label="Close this dialog window">Close</button>
-							</footer>
-
-						</div>
-					</div>
+					<footer class="modal__footer">
+						<button type="button" id="modal-btn" class="modal-btn" value="close" autofocus>Close</button>
+					</footer>
 				</div>
-			</div> <?php
+
+			</dialog>
+			
+		<?php
 		}
 	}
 
