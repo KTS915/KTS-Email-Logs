@@ -1,0 +1,60 @@
+#email-details {
+	background-color: #fff;
+	padding: 30px;
+	max-width: 740px;
+	max-height: 90%;
+	width: 90%;
+	border-radius: 4px;
+	overflow-y: auto;
+	box-sizing: border-box;
+}
+.modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height:initial;
+	margin-bottom: 20px;
+	border-bottom: 1px solid black;
+}
+.modal-close {
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	margin: 0;
+	padding: 0.2rem 0.3rem 0.1rem;
+	font-size: 24px;
+}
+.modal-header .modal-close::before {
+	content: "\2715";
+}
+.modal-content {
+	margin: 2rem 0;
+	line-height: 1.5;
+	color: rgba(0,0,0,.8);
+	font-size: 16px;
+}
+.modal-btn {
+	font-size: .875rem;
+	padding: 0.5rem 1rem;
+	background-color: #e6e6e6;
+	color: rgba(0,0,0,.8);
+	border-radius: .25rem;
+	cursor: pointer;
+	-webkit-appearance: button;
+	text-transform: none;
+	overflow: visible;
+	line-height: 1.15;
+	margin: 0;
+}
+.modal-btn:hover,
+.modal-close:hover {
+	outline: 1px solid #2271b1;
+}
+.modal-btn:focus,
+.modal-close:focus {
+	outline: 2px solid #2271b1;	
+}
+::backdrop {	
+	background-color: #2271b1;
+	opacity: 0.75;
+}
