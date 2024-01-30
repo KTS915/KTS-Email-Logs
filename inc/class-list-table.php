@@ -39,8 +39,9 @@ class KTS_Email_Logs extends WP_List_Table {
 	
 	/* ENQUEUE CSS AND JAVASCRIPT */
 	function enqueue_scripts() {
+		$suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
 		wp_enqueue_style( 'dialog-css', plugins_url( 'css/dialog.css', dirname( __FILE__ ) ) );
-		wp_enqueue_script( 'display-email', plugins_url( 'js/display-email.js', dirname( __FILE__ ) ), array(), null, true );
+		wp_enqueue_script( 'display-email', plugins_url( 'js/display-email' . $suffix . '.js', dirname( __FILE__ ) ), array(), null, true );
 	}
 
 	/**
