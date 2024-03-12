@@ -214,7 +214,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'headers':
 				$headers = '';
 				$col_names = json_decode( $item[$column_name], true );
-				if ( is_iterable( $col_names ) ) {
+				if ( ! empty( $col_names ) ) {
 					foreach( $col_names as $header ) {
 						$headers .= esc_html( $header ) . '<br>';
 					}
@@ -223,7 +223,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'attachments':
 				$attachments = '';
 				$col_attachments = json_decode( $item[$column_name], true );
-				if ( is_iterable( $col_attachments ) ) {
+				if ( ! empty( $col_attachments ) ) {
 					foreach( $col_attachments as $attachment ) {
 						$attachments .= esc_html( basename( $attachment ) ) . '<br>';
 					}
