@@ -253,7 +253,7 @@ function kts_csv_email_logs() {
 
 		$headers = '';
 		$log_headers = json_decode( $log['headers'], true );
-		if ( is_iterable( $log_headers ) ) {
+		if ( ! empty( $log_headers ) ) {
 			foreach( $log_headers as $key => $header ) {
 				if ( $key === 0 ) {
 					$headers .= $header;
@@ -266,7 +266,7 @@ function kts_csv_email_logs() {
 
 		$attachments = '';
 		$log_attachments = json_decode( $log['attachments'], true );
-		if ( is_iterable( $log_attachments ) ) {
+		if ( ! empty( $log_attachments ) ) {
 			foreach( $log_attachments as $key => $attachment ) {
 				if ( $key === 0 ) {
 					$attachments .= $attachment;
