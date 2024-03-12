@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: KTS Email Logs
+ * Plugin Name: Email Logs
  * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
  * Text Domain: kts_email_logs
@@ -252,8 +252,9 @@ function kts_csv_email_logs() {
 	foreach( $logs as $log ) {
 
 		$headers = '';
-		if ( is_iterable( $log['headers'] ) ) {
-			foreach( json_decode( $log['headers'] ) as $key => $header ) {
+		$log_headers = json_decode( $log['headers'], true );
+		if ( is_iterable( $log_headers ) ) {
+			foreach( $log_headers as $key => $header ) {
 				if ( $key === 0 ) {
 					$headers .= $header;
 				}
@@ -264,8 +265,9 @@ function kts_csv_email_logs() {
 		}
 
 		$attachments = '';
-		if ( is_iterable( $log['attachments'] ) ) {
-			foreach( json_decode( $log['attachments'] ) as $key => $attachment ) {
+		$log_attachments = json_decode( $log['attachments'], true );
+		if ( is_iterable( $log_attachments ) ) {
+			foreach( $log_attachments as $key => $attachment ) {
 				if ( $key === 0 ) {
 					$attachments .= $attachment;
 				}
