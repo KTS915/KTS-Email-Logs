@@ -32,7 +32,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		echo '.wp-list-table .column-sent { width: 15em;}';
 		echo '.wp-list-table .column-message_id { width: 5em;}';
 		echo '.dot-green { height: 10px; width: 10px; margin-left: 15px; border-radius: 50%; display: inline-block;	background-color: green; }';
-		echo '.dot-red { height: 10px; width: 10px;	margin-left: 15px;	border-radius: 50%; display: inline-block; background-color: red; }';
+		echo '.dot-red { height: 10px; width: 10px;	margin-left: 15px; border-radius: 50%; display: inline-block; background-color: red; }';
 		echo '#export-all-logs { margin-top: 3px; )';
 		echo '</style>';
 	}
@@ -213,16 +213,18 @@ class KTS_Email_Logs extends WP_List_Table {
 				return apply_filters( 'email_message', $item[$column_name] ) . '<div class="hidden">' . esc_html( $item[$column_name] ) . '</div>';
 			case 'headers':
 				$headers = '';
-				if ( is_iterable( $item[$column_name] ) ) {
-					foreach( json_decode( $item[$column_name] ) as $header ) {
+				$col_names = json_decode( $item[$column_name], true );
+				if ( is_iterable( $col_names ) ) {
+					foreach( $col_names as $header ) {
 						$headers .= esc_html( $header ) . '<br>';
 					}
 				}
 				return $headers;
 			case 'attachments':
 				$attachments = '';
-				if ( is_iterable( $item[$column_name] ) ) {
-					foreach( json_decode( $item[$column_name] ) as $attachment ) {
+				$col_attachments = json_decode( $item[$column_name], true );
+				if ( is_iterable( $col_attachments ) ) {
+					foreach( $col_attachments as $attachment ) {
 						$attachments .= esc_html( basename( $attachment ) ) . '<br>';
 					}
 				}
@@ -298,19 +300,19 @@ class KTS_Email_Logs extends WP_List_Table {
 		elseif ( $which === 'bottom' ) { // modal (to be filled by JavaScript)
 		?>
 			
-			<dialog id="email-details">
+			<dialog id="modal-details" aria-labelledby="modal-1-title">
 
 				<header class="modal-header">
 					<h2 id="modal-1-title"></h2>
-					<button type="button" id="modal-close" class="modal-close" aria-label="Close modal" value="close"></button>
+					<button type="button" id="modal-close" class="modal-close" aria-label="Close modal" value="close" autofocus></button>
 				</header>
 
 				<div class="modal-content-content">
 					<div id="modal-1-content" class="modal-content"></div>
 					<p id="modal-1-headers"></p>
 
-					<footer class="modal__footer">
-						<button type="button" id="modal-btn" class="modal-btn" value="close" autofocus>Close</button>
+					<footer class="modal-footer">
+						<button type="button" id="modal-btn" class="modal-btn" value="close">Close</button>
 					</footer>
 				</div>
 
