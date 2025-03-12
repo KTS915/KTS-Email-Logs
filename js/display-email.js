@@ -1,6 +1,6 @@
 document.addEventListener( 'DOMContentLoaded', function() {
-	
-	const dialog = document.getElementById( 'email-details' );
+
+	const dialog = document.getElementById( 'modal-details' );
 
 	const shows = document.querySelectorAll( '.email-show' );
 	shows.forEach( function( show ) {
