@@ -213,16 +213,18 @@ class KTS_Email_Logs extends WP_List_Table {
 				return apply_filters( 'email_message', $item[$column_name] ) . '<div class="hidden">' . esc_html( $item[$column_name] ) . '</div>';
 			case 'headers':
 				$headers = '';
-				if ( ! empty( $item[$column_name] ) ) {
-					foreach( maybe_unserialize( $item[$column_name] ) as $header ) {
+				$col_names = json_decode( $item[$column_name], true );
+				if ( ! empty( $col_names ) ) {
+					foreach( $col_names as $header ) {
 						$headers .= esc_html( $header ) . '<br>';
 					}
 				}
 				return $headers;
 			case 'attachments':
 				$attachments = '';
-				if ( ! empty( $item[$column_name] ) ) {
-					foreach( maybe_unserialize( $item[$column_name] ) as $attachment ) {
+				$col_attachments = json_decode( $item[$column_name], true );
+				if ( ! empty( $col_attachments ) ) {
+					foreach( $col_attachments as $attachment ) {
 						$attachments .= esc_html( basename( $attachment ) ) . '<br>';
 					}
 				}
