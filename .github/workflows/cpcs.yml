@@ -18,7 +18,7 @@ jobs:
             sed -i '/^\t<!-- start config -->.*/a\
               <file>.</file>
               ' phpcs.xml
-            sed -i '/MY_DOMAIN/ s//KTS-Email-Logs/' phpcs.xml
+            sed -i '/MY_DOMAIN/ s//kts-email-logs/' phpcs.xml
             mv phpcs.xml phpcs.xml.dist
         - name: CPCS checks
           uses: 10up/wpcs-action@stable
