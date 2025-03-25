@@ -3,7 +3,7 @@
  * Plugin Name: Email Logs
  * Plugin URI: https://timkaye.org
  * Description: Stores email logs in a custom database table
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Tim Kaye
  * Author URI: https://timkaye.org
  * Requires CP: 2.1
@@ -124,8 +124,8 @@ function kts_menu_email_logs() {
 
 	$hook = add_submenu_page(
 		'tools.php',
-		'Email Logs',
-		'Email Logs',
+		__( 'Email Logs', 'kts_email_logs' ),
+		__( 'Email Logs', 'kts_email_logs' ),
 		'manage_options',
 		'email-logs',
 		'kts_list_email_logs'
@@ -139,14 +139,13 @@ add_action( 'admin_menu', 'kts_menu_email_logs' );
 function kts_list_email_logs() {
 	$logs = new KTS_Email_Logs();
 	$logs->prepare_items();
-
-	$real_nonce = cp_set_nonce( 'real_kts_email_nonce' );
-	$nonce = $real_nonce['name'] . '-' . $real_nonce['value'];
 	?>
+
 	<div class="wrap">
-		<h1 class="wp-heading-inline">Email Logs</h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Email Logs', 'kts_email_logs' ); ?></h1>
 		<hr class="wp-header-end">
-		<h2 class="screen-reader-text">Filter list of email logs</h2>
+		<h2 class="screen-reader-text"><?php esc_html_e( 'Filter list of email logs', 'kts_email_logs' ); ?></h2>
+
 		<?php
 		$logs->views();
 		?>
@@ -161,15 +160,19 @@ function kts_list_email_logs() {
 			 * Also submits true nonce with form using Real Nonce 
 			 */
 			?>
+
 			<input type="hidden" name="page" value="email-logs">
-			<input type="hidden" name="real_nonce" value="<?php echo $nonce; ?>">
+
 			<?php
+			wp_nonce_field( 'kts_email_logs_nonce', 'kts_email_logs_nonce' );
 			$logs->display();
 			?>
+
 		</form>
 
 		<br class="clear">
 	</div>
+
 <?php
 }
 
@@ -179,7 +182,7 @@ function kts_screen_option_email_logs() {
 
 	$option = 'per_page';
 	$args   = array(
-		'label'   => 'Logs',
+		'label'   => __( 'Logs', 'kts_email_logs' ),
 		'default' => 20,
 		'option'  => 'logs_per_page'
 	);
@@ -199,7 +202,7 @@ function kts_csv_email_logs() {
 	}
 
 	# Bail if the action is neither of these
-	if ( ! in_array( $_GET['action'], ['export-all-logs', 'bulk-export'] ) ) {
+	if ( ! in_array( $_GET['action'], ['export-all-logs', 'bulk-export'], true ) ) {
 		return;
 	}
 
@@ -208,16 +211,10 @@ function kts_csv_email_logs() {
 		return;
 	}
 
-	# Verify true nonce using Real Nonce
-	$real_nonce = sanitize_key( $_GET['real_nonce'] );
-	$exploded = $check_nonce = false;
-	if ( strpos( $real_nonce, '-' ) !== false ) {
-		$exploded = explode( '-', $real_nonce );
-		$check_nonce = cp_check_nonce( $exploded[0], $exploded[1] );
-	}
-
-	if ( in_array( false, [$exploded, $check_nonce] ) ) {
-		echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without a suitable nonce.</p></div>';
+	# Verify nonce
+	$nonce = sanitize_key( $_GET['kts_email_logs_nonce'] );
+	if ( ! wp_verify_nonce( $nonce, 'kts_email_logs_nonce' ) ) {
+		echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a suitable nonce.', 'kts_email_logs' ) . '</p></div>';
 		return;
 	}
 
@@ -247,7 +244,17 @@ function kts_csv_email_logs() {
 	# Create the CSV file
 	$timezone = get_option( 'timezone_string' );
 
-	$headers = ['Message ID', 'Status', 'Recipient', 'Email', 'Subject', 'Message', 'Headers', 'Attachments', 'Date Sent'];
+	$headers = array(
+		__( 'Message ID', 'kts_email_logs' ),
+		__( 'Status', 'kts_email_logs' ),
+		__( 'Recipient', 'kts_email_logs' ),
+		__( 'Email', 'kts_email_logs' ),
+		__( 'Subject', 'kts_email_logs' ),
+		__( 'Message', 'kts_email_logs' ),
+		__( 'Headers', 'kts_email_logs' ),
+		__( 'Attachments', 'kts_email_logs' ),
+		__( 'Date Sent', 'kts_email_logs' ),
+	);
 
 	$file = fopen( 'php://output', 'w' );
 
@@ -257,7 +264,7 @@ function kts_csv_email_logs() {
 
 		$headers = '';
 		$log_headers = json_decode( $log['headers'], true );
-		if ( ! empty( $log_headers ) ) {
+		if ( is_iterable( $log_headers ) ) {
 			foreach( $log_headers as $key => $header ) {
 				if ( $key === 0 ) {
 					$headers .= $header;
@@ -270,7 +277,7 @@ function kts_csv_email_logs() {
 
 		$attachments = '';
 		$log_attachments = json_decode( $log['attachments'], true );
-		if ( ! empty( $log_attachments ) ) {
+		if ( is_iterable( $log_attachments ) ) {
 			foreach( $log_attachments as $key => $attachment ) {
 				if ( $key === 0 ) {
 					$attachments .= $attachment;
