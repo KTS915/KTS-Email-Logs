@@ -57,7 +57,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE message_id = %d", $id );
+		$sql = $wpdb->prepare( "SELECT * FROM `$table_name` WHERE message_id = %d", $id );
 
 		return $wpdb->get_row( $sql, ARRAY_A );
 	}
@@ -73,7 +73,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		$count = count( $ids );
 		$imploded = implode( ',', array_fill( 0, $count, '%d' ) );
 
-		$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE message_id IN ($imploded)", $ids );
+		$sql = $wpdb->prepare( "SELECT * FROM `$table_name` WHERE message_id IN ($imploded)", $ids );
 
 		return $wpdb->get_results( $sql, ARRAY_A );
 	}
@@ -87,7 +87,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 	
-		return $wpdb->get_results( "SELECT * FROM $table_name", ARRAY_A );
+		return $wpdb->get_results( "SELECT * FROM `$table_name`", ARRAY_A );
 	}
 
 	/**
@@ -116,7 +116,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = "SELECT COUNT(*) FROM $table_name";
+		$sql = "SELECT COUNT(*) FROM `$table_name`";
 
 		return $wpdb->get_var( $sql );
 	}
@@ -130,7 +130,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE status = %d", 1 );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM `$table_name` WHERE status = %d", 1 );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -144,7 +144,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE status = %d", 0 );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM `$table_name` WHERE status = %d", 0 );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -159,7 +159,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 		$search_term = sanitize_text_field( $_GET['s'] );
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE recipient = %s OR email = %s OR subject = %s OR message = %s", $search_term, $search_term, $search_term, $search_term );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM `$table_name` WHERE recipient = %s OR email = %s OR subject = %s OR message = %s", $search_term, $search_term, $search_term, $search_term );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -254,9 +254,9 @@ class KTS_Email_Logs extends WP_List_Table {
 	 */
 	function column_cb( $item ) {
 		$id = absint( $item['message_id'] );
-		$recipient = esc_html( $item['recipient'] );
+		$recipient = $item['recipient'];
 		return sprintf(
-			'<label class="screen-reader-text" for="log_%1$d">' . sprintf( __( 'Select Log for %s' ), $recipient ) . '</label><input type="checkbox" name="email_logs[]" id="log_%1$d" value="%1$d" />', $id
+			'<label class="screen-reader-text" for="log_%1$d">' . sprintf( esc_html__( 'Select Log for %s', 'kts-email-logs' ), $recipient ) . '</label><input type="checkbox" name="email_logs[]" id="log_%1$d" value="%1$d" />', $id
 		);
 	}
 
@@ -372,12 +372,12 @@ class KTS_Email_Logs extends WP_List_Table {
 		
 		# All actions
 		$class = ( $current === 'all' ) ? ' class="current"' : '';
-		$status_links['all'] = '<a href="?page=email-logs"' . $class . '>' . __( 'All', 'kts_email_logs' ) . '</a> (' . self::record_count() . ')';
+		$status_links['all'] = '<a href="?page=email-logs"' . $class . '>' . __( 'All', 'kts-email-logs' ) . '</a> (' . self::record_count() . ')';
 
 		$items = array(
-			'successful' => array( 'name' => __( 'Successful', 'kts_email_logs' ), 'count' => self::successful_count(), 'status_id' => 1 ),
+			'successful' => array( 'name' => __( 'Successful', 'kts-email-logs' ), 'count' => self::successful_count(), 'status_id' => 1 ),
 
-			'failed' => array( 'name' => __( 'Failed', 'kts_email_logs' ), 'count' => self::failed_count(), 'status_id' => 2 )
+			'failed' => array( 'name' => __( 'Failed', 'kts-email-logs' ), 'count' => self::failed_count(), 'status_id' => 2 )
 		);
 
 		foreach( $items as $key => $item ) {			
@@ -396,9 +396,9 @@ class KTS_Email_Logs extends WP_List_Table {
 	 */
 	public function get_bulk_actions() {
 		$actions = array(
-			'bulk-delete' => __( 'Delete', 'kts_email_logs' ),
-			'bulk-resend' => __( 'Resend', 'kts_email_logs' ),
-			'bulk-export' => __( 'Export', 'kts_email_logs' ),
+			'bulk-delete' => __( 'Delete', 'kts-email-logs' ),
+			'bulk-resend' => __( 'Resend', 'kts-email-logs' ),
+			'bulk-export' => __( 'Export', 'kts-email-logs' ),
 		);
 
 		return $actions;
@@ -494,13 +494,13 @@ class KTS_Email_Logs extends WP_List_Table {
 				# Verify nonce
 				$nonce = sanitize_key( $_GET['kts_email_logs_nonce'] );
 				if ( ! wp_verify_nonce( $nonce, 'kts_email_logs_nonce' ) ) {
-					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without an appropriate nonce.', 'kts_email_logs' ) . '</p></div>';
+					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without an appropriate nonce.', 'kts-email-logs' ) . '</p></div>';
 					return;
 				}
 
 				if ( ! empty( $_GET['email_logs'] ) ) {
 					$ids = array_map( 'absint', $_GET['email_logs'] );
-					$count = count( $ids ) > 1 ? count( $ids ) . ' ' . __( 'logs', 'kts_email_logs' ) : __( '1 log', 'kts_email_logs' );
+					$count = count( $ids ) > 1 ? count( $ids ) . ' ' . __( 'logs', 'kts-email-logs' ) : __( '1 log', 'kts-email-logs' );
 				}
 
 			}
@@ -510,7 +510,7 @@ class KTS_Email_Logs extends WP_List_Table {
 				# Verify nonce
 				$nonce = sanitize_key( $_GET['_wpnonce'] );
 				if ( ! wp_verify_nonce( $nonce, $action ) ) {
-					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a nonce.', 'kts_email_logs' ) . '</p></div>';
+					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a nonce.', 'kts-email-logs' ) . '</p></div>';
 					return;
 				}
 
