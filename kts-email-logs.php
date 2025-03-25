@@ -10,7 +10,7 @@
  * Requires PHP: 7.4
  * Requires at least: 6.2.3
  * License: GPLv3
- * Text Domain: kts_email_logs
+ * Text Domain: kts-email-logs
 */
 
 /* INCLUDE REQUIRED FILES */
@@ -58,8 +58,8 @@ function kts_send_data_to_email_logs_on_success( $mail_data ) { // $mail_data
 		'subject'		=> sanitize_text_field( $mail_data['subject'] ),
 		'message'		=> filter_var( $mail_data['message'], FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
 		'sent'			=> time(),
-		'headers'		=> json_encode( $headers ),
-		'attachments'	=> json_encode( $attachments ),
+		'headers'		=> wp_json_encode( $headers ),
+		'attachments'	=> wp_json_encode( $attachments ),
 	);
 
 	$wpdb->insert( $table_name, $email_array ); // $wpdb->insert sanitizes data
@@ -103,8 +103,8 @@ function kts_send_data_to_email_logs_on_failure( $error ) {
 		'subject'		=> sanitize_text_field( $error->error_data['wp_mail_failed']['subject'] ),
 		'message'		=> filter_var( $error->error_data['wp_mail_failed']['message'], FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
 		'sent'			=> time(),
-		'headers'		=> json_encode( $headers ),
-		'attachments'	=> json_encode( $attachments ),
+		'headers'		=> wp_json_encode( $headers ),
+		'attachments'	=> wp_json_encode( $attachments ),
 		'error'			=> sanitize_text_field( $error->errors['wp_mail_failed'][0] ),
 		'exception'		=> absint( $error->error_data['wp_mail_failed']['phpmailer_exception_code'] ),
 	);
@@ -124,8 +124,8 @@ function kts_menu_email_logs() {
 
 	$hook = add_submenu_page(
 		'tools.php',
-		__( 'Email Logs', 'kts_email_logs' ),
-		__( 'Email Logs', 'kts_email_logs' ),
+		__( 'Email Logs', 'kts-email-logs' ),
+		__( 'Email Logs', 'kts-email-logs' ),
 		'manage_options',
 		'email-logs',
 		'kts_list_email_logs'
@@ -142,9 +142,9 @@ function kts_list_email_logs() {
 	?>
 
 	<div class="wrap">
-		<h1 class="wp-heading-inline"><?php esc_html_e( 'Email Logs', 'kts_email_logs' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Email Logs', 'kts-email-logs' ); ?></h1>
 		<hr class="wp-header-end">
-		<h2 class="screen-reader-text"><?php esc_html_e( 'Filter list of email logs', 'kts_email_logs' ); ?></h2>
+		<h2 class="screen-reader-text"><?php esc_html_e( 'Filter list of email logs', 'kts-email-logs' ); ?></h2>
 
 		<?php
 		$logs->views();
@@ -182,7 +182,7 @@ function kts_screen_option_email_logs() {
 
 	$option = 'per_page';
 	$args   = array(
-		'label'   => __( 'Logs', 'kts_email_logs' ),
+		'label'   => __( 'Logs', 'kts-email-logs' ),
 		'default' => 20,
 		'option'  => 'logs_per_page'
 	);
@@ -214,7 +214,7 @@ function kts_csv_email_logs() {
 	# Verify nonce
 	$nonce = sanitize_key( $_GET['kts_email_logs_nonce'] );
 	if ( ! wp_verify_nonce( $nonce, 'kts_email_logs_nonce' ) ) {
-		echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a suitable nonce.', 'kts_email_logs' ) . '</p></div>';
+		echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a suitable nonce.', 'kts-email-logs' ) . '</p></div>';
 		return;
 	}
 
@@ -245,15 +245,15 @@ function kts_csv_email_logs() {
 	$timezone = get_option( 'timezone_string' );
 
 	$headers = array(
-		__( 'Message ID', 'kts_email_logs' ),
-		__( 'Status', 'kts_email_logs' ),
-		__( 'Recipient', 'kts_email_logs' ),
-		__( 'Email', 'kts_email_logs' ),
-		__( 'Subject', 'kts_email_logs' ),
-		__( 'Message', 'kts_email_logs' ),
-		__( 'Headers', 'kts_email_logs' ),
-		__( 'Attachments', 'kts_email_logs' ),
-		__( 'Date Sent', 'kts_email_logs' ),
+		__( 'Message ID', 'kts-email-logs' ),
+		__( 'Status', 'kts-email-logs' ),
+		__( 'Recipient', 'kts-email-logs' ),
+		__( 'Email', 'kts-email-logs' ),
+		__( 'Subject', 'kts-email-logs' ),
+		__( 'Message', 'kts-email-logs' ),
+		__( 'Headers', 'kts-email-logs' ),
+		__( 'Attachments', 'kts-email-logs' ),
+		__( 'Date Sent', 'kts-email-logs' ),
 	);
 
 	$file = fopen( 'php://output', 'w' );
