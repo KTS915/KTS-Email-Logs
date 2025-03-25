@@ -3,7 +3,7 @@ Description: Stores email logs in a custom database table.
 Author: Tim Kaye
 Author URI: https://timkaye.org
 Contributors: KTS915
-Version: 1.1.0
+Version: 1.2.0
 Tags: email logs, classicpress
 Requires PHP: 7.0
 Requires CP: CP 2.1
