@@ -1,7 +1,7 @@
 # KTS Email Logs
 Author:            Tim Kaye
 
-Version:           0.2.0
+Version:           1.2.0
 
 Requires CP:       2.1
 
