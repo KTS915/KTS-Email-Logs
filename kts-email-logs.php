@@ -124,8 +124,8 @@ function kts_menu_email_logs() {
 
 	$hook = add_submenu_page(
 		'tools.php',
-		__( 'Email Logs', 'kts-email-logs' ),
-		__( 'Email Logs', 'kts-email-logs' ),
+		esc_html__( 'Email Logs', 'kts-email-logs' ),
+		esc_html__( 'Email Logs', 'kts-email-logs' ),
 		'manage_options',
 		'email-logs',
 		'kts_list_email_logs'
@@ -182,7 +182,7 @@ function kts_screen_option_email_logs() {
 
 	$option = 'per_page';
 	$args   = array(
-		'label'   => __( 'Logs', 'kts-email-logs' ),
+		'label'   => esc_html__( 'Logs', 'kts-email-logs' ),
 		'default' => 20,
 		'option'  => 'logs_per_page'
 	);
