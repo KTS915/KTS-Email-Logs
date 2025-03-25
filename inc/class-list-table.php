@@ -32,7 +32,11 @@ class KTS_Email_Logs extends WP_List_Table {
 		echo '.wp-list-table .column-sent { width: 15em;}';
 		echo '.wp-list-table .column-message_id { width: 5em;}';
 		echo '.dot-green { height: 10px; width: 10px; margin-left: 15px; border-radius: 50%; display: inline-block;	background-color: green; }';
-		echo '.dot-red { height: 10px; width: 10px;	margin-left: 15px; border-radius: 50%; display: inline-block; background-color: red; }';
+		echo '.symbol-green { font-size: 1.5em; margin-left: 15px; display: inline-block; color: green; }';
+		echo '.symbol-green::before { content: "\2714"; }';
+		echo '.dot-red { height: 10px; width: 10px; margin-left: 15px; border-radius: 50%; display: inline-block; background-color: red; }';
+		echo '.symbol-red { font-size: 1.5em; margin-left: 15px; display: inline-block; color: red; }';
+		echo '.symbol-red::before { content: "\2716"; }';
 		echo '#export-all-logs { margin-top: 3px; )';
 		echo '</style>';
 	}
@@ -187,7 +191,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						return '<span class="dot-green"></span>';
 					}
 					elseif ( $indicator === 'symbols' ) {
-						return '<span>&#9989;</span>';
+						return '<span class="symbol-green"></span>';
 					}
 					elseif ( $indicator === 'text' ) {
 						return '<span>Success</span>';
@@ -197,7 +201,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						return '<span class="dot-red"></span>';
 					}
 					elseif ( $indicator === 'symbols' ) {
-						return '<span>&#10060;</span>';
+						return '<span class="symbol-red"></span>';
 					}
 					elseif ( $indicator === 'text' ) {
 						return '<span>Failed</span>';
@@ -214,7 +218,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'headers':
 				$headers = '';
 				$col_names = json_decode( $item[$column_name], true );
-				if ( ! empty( $col_names ) ) {
+				if ( is_iterable( $col_names ) ) {
 					foreach( $col_names as $header ) {
 						$headers .= esc_html( $header ) . '<br>';
 					}
@@ -223,7 +227,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'attachments':
 				$attachments = '';
 				$col_attachments = json_decode( $item[$column_name], true );
-				if ( ! empty( $col_attachments ) ) {
+				if ( is_iterable( $col_attachments ) ) {
 					foreach( $col_attachments as $attachment ) {
 						$attachments .= esc_html( basename( $attachment ) ) . '<br>';
 					}
@@ -258,8 +262,6 @@ class KTS_Email_Logs extends WP_List_Table {
 
 	/**
 	 * Enable Delete, Resend, and Show for each individual item
-	 * 
-	 * Uses true nonces
 	 *
 	 * @param array $item an array of DB data
 	 *
@@ -269,16 +271,15 @@ class KTS_Email_Logs extends WP_List_Table {
 
 		$page = esc_attr( $_GET['page'] );
 		$message_id = absint( $item['message_id'] );
-		$real_nonce = cp_set_nonce( 'real_kts_email_nonce' );
-		$nonce = $real_nonce['name'] . '-' . $real_nonce['value'];
+		$home_url = home_url( '/' );
 
 		$actions = array(
 
-			'delete' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Delete</a>', $page, 'delete', $message_id, $nonce ),
+			'delete' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Delete</a>', $page, 'delete', $message_id, wp_create_nonce( 'delete' ) ),
 
-			'resend' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Resend</a>', $page,'resend', $message_id, $nonce ),
+			'resend' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Resend</a>', $page, 'resend', $message_id, wp_create_nonce( 'resend' ) ),
 
-			'show'	 => sprintf( '<a class="email-show" data-id="' . $message_id . '" data-micromodal-trigger="modal-1" href="?page=%s&action=%s&log=%s&_wpnonce=%s#email-logs-modal">Show</a>', $page, 'show', $message_id, $nonce )
+			'show'	 => '<a class="email-show" data-id="' . $message_id . '" data-micromodal-trigger="modal-1" href="' . esc_url( $home_url ) . '">Show</a>'
 
 		);
 
@@ -395,9 +396,9 @@ class KTS_Email_Logs extends WP_List_Table {
 	 */
 	public function get_bulk_actions() {
 		$actions = array(
-			'bulk-delete' => 'Delete',
-			'bulk-resend' => 'Resend',
-			'bulk-export' => 'Export'
+			'bulk-delete' => __( 'Delete', 'kts_email_logs' ),
+			'bulk-resend' => __( 'Resend', 'kts_email_logs' ),
+			'bulk-export' => __( 'Export', 'kts_email_logs' ),
 		);
 
 		return $actions;
@@ -490,38 +491,26 @@ class KTS_Email_Logs extends WP_List_Table {
 
 			 if ( strpos( $action, 'bulk-' ) !== false || ! empty( $_GET['s'] ) ) {
 
-				# Verify true nonce using Real Nonce
-				$real_nonce = sanitize_key( $_GET['real_nonce'] );
-				$exploded = $check_nonce = false;
-				if ( strpos( $real_nonce, '-' ) !== false ) {
-					$exploded = explode( '-', $real_nonce );
-					$check_nonce = cp_check_nonce( $exploded[0], $exploded[1] );
-				}
-
-				if ( in_array( false, [$exploded, $check_nonce] ) ) {
-					echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without an appropriate nonce.</p></div>';
+				# Verify nonce
+				$nonce = sanitize_key( $_GET['kts_email_logs_nonce'] );
+				if ( ! wp_verify_nonce( $nonce, 'kts_email_logs_nonce' ) ) {
+					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without an appropriate nonce.', 'kts_email_logs' ) . '</p></div>';
 					return;
 				}
 
 				if ( ! empty( $_GET['email_logs'] ) ) {
 					$ids = array_map( 'absint', $_GET['email_logs'] );
-					$count = count( $ids ) > 1 ? count( $ids ) . ' logs' : '1 log';
+					$count = count( $ids ) > 1 ? count( $ids ) . ' ' . __( 'logs', 'kts_email_logs' ) : __( '1 log', 'kts_email_logs' );
 				}
 
 			}
 
-			elseif ( $_GET['action'] !== 'export-all-logs' ) {
+			elseif ( $action !== 'export-all-logs' ) {
 
-				# Verify true nonce using Real Nonce
+				# Verify nonce
 				$nonce = sanitize_key( $_GET['_wpnonce'] );
-				$exploded = $check_nonce = false;
-				if ( strpos( $nonce, '-' ) !== false ) {
-					$exploded = explode( '-', $nonce );
-					$check_nonce = cp_check_nonce( $exploded[0], $exploded[1] );
-				}
-
-				if ( in_array( false, [$exploded, $check_nonce] ) ) {
-					echo '<div class="notice notice-error is-dismissible"><p>That action is not possible without a nonce.</p></div>';
+				if ( ! wp_verify_nonce( $nonce, $action ) ) {
+					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a nonce.', 'kts_email_logs' ) . '</p></div>';
 					return;
 				}
 
@@ -538,7 +527,7 @@ class KTS_Email_Logs extends WP_List_Table {
 				case 'delete':
 					self::delete_log( $id );
 
-					echo '<div class="notice notice-success is-dismissible"><p>Log ID ' . $id . ' successfully deleted.</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . sprintf( __( 'Log ID %d successfully deleted.', 'kts_email_logs' ), $id ) . '</p></div>';
 					break;
 
 				case 'bulk-delete':
@@ -546,7 +535,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						self::delete_log( $id );
 					}
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . $count . ' successfully deleted.</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . $count . ' ' . __( 'successfully deleted.', 'kts_email_logs' ) . '</p></div>';
 					break;
 
 				case 'resend':
@@ -559,7 +548,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						esc_html( $log['attachments'] ),
 					);
 
-					echo '<div class="notice notice-success is-dismissible"><p>Email ID ' . $id . ' resent.</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . sprintf( __( 'Email ID %d resent.', 'kts_email_logs' ), $id ) . '</p></div>';
 					break;
 
 				case 'bulk-resend':
@@ -574,7 +563,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						);
 					}
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . str_replace( 'log', 'email', $count ) . ' resent.</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . str_replace( __( 'log', 'kts_email_logs' ), __( 'email', 'kts_email_logs' ), $count ) . ' resent.</p></div>';
 					break;
 
 				default:
