@@ -222,8 +222,7 @@ function kts_csv_email_logs() {
 	$logs = [];
 	if ( $_GET['action'] === 'export-all-logs' ) {
 		$logs = KTS_Email_Logs::get_all_logs();
-	}
-	else {
+	} else {
 		$ids = array_map( 'absint', $_GET['email_logs'] );
 		$logs = KTS_Email_Logs::get_selected_logs( $ids );
 	}
@@ -258,7 +257,7 @@ function kts_csv_email_logs() {
 
 	$file = fopen( 'php://output', 'w' );
 
-	fputcsv( $file, $headers );
+	fputcsv( $file, $headers, ',', '"', '' );
 
 	foreach( $logs as $log ) {
 
@@ -288,17 +287,23 @@ function kts_csv_email_logs() {
 			}
 		}
 
-		fputcsv( $file, array(
-			absint( $log['message_id'] ),
-			esc_html( $log['status'] ),
-			esc_html( $log['recipient'] ),
-			esc_html( $log['email'] ),
-			esc_html( $log['subject'] ),
-			apply_filters( 'email_message_csv', $log['message'] ),
-			esc_html( $headers ),
-			esc_html( $attachments ),
-			kts_wp_date ( 'l, F jS, Y \a\t g:ia', $log['sent'] ),
-		) );
+		fputcsv(
+			$file,
+			array(
+				absint( $log['message_id'] ),
+				esc_html( $log['status'] ),
+				esc_html( $log['recipient'] ),
+				esc_html( $log['email'] ),
+				esc_html( $log['subject'] ),
+				apply_filters( 'email_message_csv', $log['message'] ),
+				esc_html( $headers ),
+				esc_html( $attachments ),
+				kts_wp_date ( 'l, F jS, Y \a\t g:ia', $log['sent'] ),
+			),
+			',',
+			'"',
+			''
+		);
 
 	}
 
