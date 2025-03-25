@@ -11,8 +11,8 @@ class KTS_Email_Logs extends WP_List_Table {
 	public function __construct() {
 
 		parent::__construct( array(
-			'singular' => __( 'Email Log', 'kts_email_logs' ),
-			'plural'   => __( 'Email Logs', 'kts_email_logs' ),
+			'singular' => __( 'Email Log', 'kts-email-logs' ),
+			'plural'   => __( 'Email Logs', 'kts-email-logs' ),
 			'ajax'     => false // does not support ajax
 		) );
 
@@ -527,7 +527,7 @@ class KTS_Email_Logs extends WP_List_Table {
 				case 'delete':
 					self::delete_log( $id );
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . sprintf( __( 'Log ID %d successfully deleted.', 'kts_email_logs' ), $id ) . '</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . sprintf( esc_html__( 'Log ID %d successfully deleted.', 'kts-email-logs' ), $id ) . '</p></div>';
 					break;
 
 				case 'bulk-delete':
@@ -535,7 +535,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						self::delete_log( $id );
 					}
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . $count . ' ' . __( 'successfully deleted.', 'kts_email_logs' ) . '</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $count ) . ' ' . esc_html__( 'successfully deleted.', 'kts-email-logs' ) . '</p></div>';
 					break;
 
 				case 'resend':
@@ -548,7 +548,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						esc_html( $log['attachments'] ),
 					);
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . sprintf( __( 'Email ID %d resent.', 'kts_email_logs' ), $id ) . '</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . sprintf( esc_html__( 'Email ID %d resent.', 'kts-email-logs' ), $id ) . '</p></div>';
 					break;
 
 				case 'bulk-resend':
@@ -563,7 +563,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						);
 					}
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . str_replace( __( 'log', 'kts_email_logs' ), __( 'email', 'kts_email_logs' ), $count ) . ' resent.</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . str_replace( __( 'log', 'kts-email-logs' ), __( 'email', 'kts-email-logs' ), $count ) . ' resent.</p></div>';
 					break;
 
 				default:
