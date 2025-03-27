@@ -57,7 +57,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT * FROM `$table_name` WHERE message_id = %d", $id );
+		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id = %d", $table_name, $id );
 
 		return $wpdb->get_row( $sql, ARRAY_A );
 	}
@@ -73,7 +73,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		$count = count( $ids );
 		$imploded = implode( ',', array_fill( 0, $count, '%d' ) );
 
-		$sql = $wpdb->prepare( "SELECT * FROM `$table_name` WHERE message_id IN ($imploded)", $ids );
+		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id IN ($imploded)", $table_name );
 
 		return $wpdb->get_results( $sql, ARRAY_A );
 	}
@@ -87,7 +87,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 	
-		return $wpdb->get_results( "SELECT * FROM `$table_name`", ARRAY_A );
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i", $table_name ), ARRAY_A );
 	}
 
 	/**
@@ -130,7 +130,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM `$table_name` WHERE status = %d", 1 );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = %d", $table_name, 1 );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -144,7 +144,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM `$table_name` WHERE status = %d", 0 );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = %d", $table_name, 0 );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -157,9 +157,9 @@ class KTS_Email_Logs extends WP_List_Table {
 	public static function search_count() {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
-		$search_term = sanitize_text_field( $_GET['s'] );
+		$search_term = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM `$table_name` WHERE recipient = %s OR email = %s OR subject = %s OR message = %s", $search_term, $search_term, $search_term, $search_term );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE recipient = %s OR email = %s OR subject = %s OR message = %s", $table_name, $search_term, $search_term, $search_term, $search_term );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -167,7 +167,7 @@ class KTS_Email_Logs extends WP_List_Table {
 
 	/** Text displayed when no log data is available */
 	public function no_items() {
-		_e( 'No logs available.', 'kts_email_logs' );
+		esc_html_e( 'No logs available.', 'kts-email-logs' );
 	}
 
 
@@ -269,15 +269,15 @@ class KTS_Email_Logs extends WP_List_Table {
 	 */
 	function column_recipient( $item ) {
 
-		$page = esc_attr( $_GET['page'] );
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 		$message_id = absint( $item['message_id'] );
 		$home_url = home_url( '/' );
 
 		$actions = array(
 
-			'delete' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Delete</a>', $page, 'delete', $message_id, wp_create_nonce( 'delete' ) ),
+			'delete' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Delete</a>', esc_attr( $page ), 'delete', $message_id, wp_create_nonce( 'delete' ) ),
 
-			'resend' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Resend</a>', $page, 'resend', $message_id, wp_create_nonce( 'resend' ) ),
+			'resend' => sprintf( '<a href="?page=%s&action=%s&log=%s&_wpnonce=%s">Resend</a>', esc_attr( $page ), 'resend', $message_id, wp_create_nonce( 'resend' ) ),
 
 			'show'	 => '<a class="email-show" data-id="' . $message_id . '" data-micromodal-trigger="modal-1" href="' . esc_url( $home_url ) . '">Show</a>'
 
@@ -294,7 +294,7 @@ class KTS_Email_Logs extends WP_List_Table {
 	function extra_tablenav( $which ) {
 		if ( $which === 'top' ) { ?>
 
-			<button type="submit" id="export-all-logs" name="action" class="button button-primary" value="export-all-logs"><?php _e( 'Export All Logs', 'kts_email_logs' ); ?></button> <?php
+			<button type="submit" id="export-all-logs" name="action" class="button button-primary" value="export-all-logs"><?php _e( 'Export All Logs', 'kts-email-logs' ); ?></button> <?php
 
 		}
 
@@ -332,15 +332,15 @@ class KTS_Email_Logs extends WP_List_Table {
 	function get_columns() {
 		$columns = array(
 			'cb'			=> '<input type="checkbox" />',
-			'status'		=> __( 'Status', 'kts_email_logs' ),
-			'recipient'		=> __( 'Recipient', 'kts_email_logs' ),
-			'email'			=> __( 'Email', 'kts_email_logs' ),
-			'subject'		=> __( 'Subject', 'kts_email_logs' ),
-			'message'		=> __( 'Message', 'kts_email_logs' ),
-			'headers'		=> __( 'Headers', 'kts_email_logs' ),
-			'attachments'	=> __( 'Attachments', 'kts_email_logs' ),
-			'sent'			=> __( 'Sent', 'kts_email_logs' ),
-			'message_id'	=> __( 'ID', 'kts_email_logs' )
+			'status'		=> __( 'Status', 'kts-email-logs' ),
+			'recipient'		=> __( 'Recipient', 'kts-email-logs' ),
+			'email'			=> __( 'Email', 'kts-email-logs' ),
+			'subject'		=> __( 'Subject', 'kts-email-logs' ),
+			'message'		=> __( 'Message', 'kts-email-logs' ),
+			'headers'		=> __( 'Headers', 'kts-email-logs' ),
+			'attachments'	=> __( 'Attachments', 'kts-email-logs' ),
+			'sent'			=> __( 'Sent', 'kts-email-logs' ),
+			'message_id'	=> __( 'ID', 'kts-email-logs' )
 		);
 
 		return $columns;
@@ -368,7 +368,7 @@ class KTS_Email_Logs extends WP_List_Table {
 
 	protected function get_views() {
 		$status_links = array();
-		$current = ( ! empty( $_GET['status'] ) ) ? $_GET['status'] : 'all';
+		$current = isset( $_GET['status'] ) ? wp_unslash( $_GET['status'] ) : 'all';
 		
 		# All actions
 		$class = ( $current === 'all' ) ? ' class="current"' : '';
@@ -424,15 +424,15 @@ class KTS_Email_Logs extends WP_List_Table {
         # Prepare query params, as usual current page, order by and order direction
 		$paged = isset( $_GET['paged'] ) ? ( $per_page * max( 0, absint( $_GET['paged'] ) - 1 ) ) : 0;
 
-		$orderby = ( isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? $_GET['orderby'] : 'message_id';
+		$orderby = ( isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? wp_unslash( $_GET['orderby'] ) : 'message_id';
 
-		$order = ( isset( $_GET['order'] ) && in_array( $_GET['order'], array('asc', 'desc') ) ) ? $_GET['order'] : 'desc';
+		$order = ( isset( $_GET['order'] ) && in_array( $_GET['order'], array('asc', 'desc') ) ) ? wp_unslash( $_GET['order'] ) : 'desc';
 
 		# Display logs
 		if ( ( empty( $_GET['status'] ) || ! in_array( $_GET['status'], ['successful', 'failed'] ) ) && empty( $_GET['s'] ) ) { // display all logs
 
 			# Define $items array
-			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged ), ARRAY_A );
+			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $orderby, $order, $per_page, $paged ), ARRAY_A );
 
 			$this->set_pagination_args( array(
 				'total_items' => $total_items,
@@ -453,7 +453,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			}
 
 			# Define $items array
-			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE status = %d ORDER BY $orderby $order LIMIT %d OFFSET %d", $status, $per_page, $paged ), ARRAY_A );
+			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE status = %d ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $status, $orderby, $order, $per_page, $paged ), ARRAY_A );
 
 			$this->set_pagination_args( array(
 				'total_items' => $status_items,
@@ -465,11 +465,11 @@ class KTS_Email_Logs extends WP_List_Table {
 
 		elseif ( ! empty( $_GET['s'] ) ) { // display logs according to search term
 
-			$search_term = sanitize_text_field( $_GET['s'] );
+			$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) );
 			$search_items = (int) self::search_count();
 
 			# Define $items array
-			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE recipient = %s OR email = %s OR subject = %s OR message = %s ORDER BY $orderby $order LIMIT %d OFFSET %d", $search_term, $search_term, $search_term, $search_term, $per_page, $paged ), ARRAY_A );
+			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE recipient = %s OR email = %s OR subject = %s OR message = %s ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $search_term, $search_term, $search_term, $search_term, $orderby, $order, $per_page, $paged ), ARRAY_A );
 
 			$this->set_pagination_args( array(
 				'total_items' => $search_items,
@@ -492,15 +492,15 @@ class KTS_Email_Logs extends WP_List_Table {
 			 if ( strpos( $action, 'bulk-' ) !== false || ! empty( $_GET['s'] ) ) {
 
 				# Verify nonce
-				$nonce = sanitize_key( $_GET['kts_email_logs_nonce'] );
+				$nonce = isset( $_GET['kts_email_logs_nonce'] ) ? sanitize_key( $_GET['kts_email_logs_nonce'] ) : '';
 				if ( ! wp_verify_nonce( $nonce, 'kts_email_logs_nonce' ) ) {
-					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without an appropriate nonce.', 'kts-email-logs' ) . '</p></div>';
+					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'That action is not possible without an appropriate nonce.', 'kts-email-logs' ) . '</p></div>';
 					return;
 				}
 
 				if ( ! empty( $_GET['email_logs'] ) ) {
 					$ids = array_map( 'absint', $_GET['email_logs'] );
-					$count = count( $ids ) > 1 ? count( $ids ) . ' ' . __( 'logs', 'kts-email-logs' ) : __( '1 log', 'kts-email-logs' );
+					$count = count( $ids ) > 1 ? count( $ids ) . ' ' . esc_html__( 'logs', 'kts-email-logs' ) : esc_html__( '1 log', 'kts-email-logs' );
 				}
 
 			}
@@ -569,7 +569,6 @@ class KTS_Email_Logs extends WP_List_Table {
 				default:
 					// do nothing or something else
 					return;
-					break;
 			}
 		}
 
