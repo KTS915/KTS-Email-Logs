@@ -23,8 +23,9 @@ class KTS_Email_Logs extends WP_List_Table {
 
 	function admin_header() {
 		if ( empty( $_GET['page'] ) || $_GET['page'] !== 'email-logs' ) {
-			return;
+			return; // CPCS: CSRF ok.
 		}
+
 		echo '<style>';
 		echo '.wp-list-table .column-status { width: 6em; }';
 		echo '.wp-list-table .column-recipient { width: 15em; }';
@@ -57,9 +58,9 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id = %d", $table_name, $id );
+		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id = %d", $table_name, $id ); // CPCS: %i supported since WP 6.2.
 
-		return $wpdb->get_row( $sql, ARRAY_A );
+		return $wpdb->get_row( $sql, ARRAY_A ); // CPCS: $sql already prepared.
 	}
 
 	/**
@@ -71,9 +72,9 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 		$imploded = implode( ',', array_map( 'absint', $ids ) ); 
-		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id IN ($imploded)", $table_name );
+		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id IN ($imploded)", $table_name ); // CPCS: %i supported since WP 6.2.
 
-		return $wpdb->get_results( $sql, ARRAY_A );
+		return $wpdb->get_results( $sql, ARRAY_A ); // CPCS: $sql already prepared.
 	}
 
 	/**
@@ -85,7 +86,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 	
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i", $table_name ), ARRAY_A );
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i", $table_name ), ARRAY_A ); // CPCS: %i supported since WP 6.2.
 	}
 
 	/**
@@ -114,9 +115,9 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i", $table_name );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i", $table_name ); // CPCS: %i supported since WP 6.2.
 
-		return $wpdb->get_var( $sql );
+		return $wpdb->get_var( $sql ); // CPCS: $sql already prepared.
 	}
 
 	/**
@@ -128,9 +129,9 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = %d", $table_name, 1 );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = %d", $table_name, 1 ); // CPCS: %i supported since WP 6.2.
 
-		return $wpdb->get_var( $sql );
+		return $wpdb->get_var( $sql ); // CPCS: $sql already prepared.
 	}
 
 	/**
@@ -142,9 +143,9 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = %d", $table_name, 0 );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = %d", $table_name, 0 ); // CPCS: %i supported since WP 6.2.
 
-		return $wpdb->get_var( $sql );
+		return $wpdb->get_var( $sql ); // CPCS: $sql already prepared.
 	}
 
 	/**
@@ -157,9 +158,9 @@ class KTS_Email_Logs extends WP_List_Table {
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 		$search_term = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE recipient = %s OR email = %s OR subject = %s OR message = %s", $table_name, $search_term, $search_term, $search_term, $search_term );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE recipient = %s OR email = %s OR subject = %s OR message = %s", $table_name, $search_term, $search_term, $search_term, $search_term ); // CPCS: %i supported since WP 6.2.
 
-		return $wpdb->get_var( $sql );
+		return $wpdb->get_var( $sql ); // CPCS: $sql already prepared.
 	}
 
 
@@ -239,7 +240,7 @@ class KTS_Email_Logs extends WP_List_Table {
 			case 'message_id':
 				return absint( $item[$column_name] );
 			default:
-				return print_r( $item, true ); // Show the whole array for troubleshooting purposes
+				return print_r( $item, true ); // CPCS: Show the whole array for troubleshooting purposes.
 		}
 	}
 
@@ -267,7 +268,7 @@ class KTS_Email_Logs extends WP_List_Table {
 	 */
 	function column_recipient( $item ) {
 
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // CPCS: CSRF ok.
 		$message_id = absint( $item['message_id'] );
 		$home_url = home_url( '/' );
 
@@ -292,7 +293,7 @@ class KTS_Email_Logs extends WP_List_Table {
 	function extra_tablenav( $which ) {
 		if ( $which === 'top' ) { ?>
 
-			<button type="submit" id="export-all-logs" name="action" class="button button-primary" value="export-all-logs"><?php _e( 'Export All Logs', 'kts-email-logs' ); ?></button> <?php
+			<button type="submit" id="export-all-logs" name="action" class="button button-primary" value="export-all-logs"><?php esc_html_e( 'Export All Logs', 'kts-email-logs' ); ?></button> <?php
 
 		}
 
@@ -366,7 +367,7 @@ class KTS_Email_Logs extends WP_List_Table {
 
 	protected function get_views() {
 		$status_links = array();
-		$current = isset( $_GET['status'] ) ? wp_unslash( $_GET['status'] ) : 'all';
+		$current = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : 'all'; // CPCS: CSRF ok.
 		
 		# All actions
 		$class = ( $current === 'all' ) ? ' class="current"' : '';
@@ -420,17 +421,17 @@ class KTS_Email_Logs extends WP_List_Table {
 		$total_items  = self::record_count();
 
         # Prepare query params, as usual current page, order by and order direction
-		$paged = isset( $_GET['paged'] ) ? ( $per_page * max( 0, absint( $_GET['paged'] ) - 1 ) ) : 0;
+		$paged = isset( $_GET['paged'] ) ? ( $per_page * max( 0, absint( $_GET['paged'] ) - 1 ) ) : 0; // CPCS: CSRF ok.
 
-		$orderby = ( isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['orderby'] ) ) : 'message_id';
+		$orderby = ( isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['orderby'] ) ) : 'message_id'; // CPCS: CSRF ok.
 
-		$order = ( isset( $_GET['order'] ) && in_array( $_GET['order'], array('asc', 'desc') ) ) ? wp_unslash( $_GET['order'] ) : 'desc';
+		$order = ( isset( $_GET['order'] ) && in_array( $_GET['order'], array( 'asc', 'desc' ) ) ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'desc'; // CPCS: CSRF ok.
 
 		# Display logs
-		if ( ( empty( $_GET['status'] ) || ! in_array( $_GET['status'], ['successful', 'failed'] ) ) && empty( $_GET['s'] ) ) { // display all logs
+		if ( ( empty( $_GET['status'] ) || ! in_array( $_GET['status'], ['successful', 'failed'] ) ) && empty( $_GET['s'] ) ) { // CPCS: CSRF ok.
 
 			# Define $items array
-			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $orderby, $order, $per_page, $paged ), ARRAY_A );
+			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $orderby, $order, $per_page, $paged ), ARRAY_A ); // CPCS: %i supported since WP 6.2.
 
 			$this->set_pagination_args( array(
 				'total_items' => $total_items,
@@ -439,19 +440,20 @@ class KTS_Email_Logs extends WP_List_Table {
 			) );
 		}
 
-		elseif ( ! empty( $_GET['status'] ) ) { // display logs according to status
+		# Display logs according to status
+		elseif ( ! empty( $_GET['status'] ) ) { // CPCS: CSRF ok.
 
-			if ( $_GET['status'] === 'successful' ) {
+			if ( $_GET['status'] === 'successful' ) { // CPCS: CSRF ok.
 				$status = 1;
 				$status_items = (int) self::successful_count();
 			}
-			elseif ( $_GET['status'] === 'failed' ) {
+			elseif ( $_GET['status'] === 'failed' ) { // CPCS: CSRF ok.
 				$status = 0;
 				$status_items = (int) self::failed_count();
 			}
 
 			# Define $items array
-			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE status = %d ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $status, $orderby, $order, $per_page, $paged ), ARRAY_A );
+			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE status = %d ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $status, $orderby, $order, $per_page, $paged ), ARRAY_A ); // CPCS: %i supported since WP 6.2.
 
 			$this->set_pagination_args( array(
 				'total_items' => $status_items,
@@ -461,13 +463,14 @@ class KTS_Email_Logs extends WP_List_Table {
 
 		}
 
-		elseif ( ! empty( $_GET['s'] ) ) { // display logs according to search term
+		# Display logs according to search term
+		elseif ( ! empty( $_GET['s'] ) ) { // CPCS: CSRF ok.
 
-			$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) );
+			$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) ); // CPCS: CSRF ok.
 			$search_items = (int) self::search_count();
 
 			# Define $items array
-			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE recipient = %s OR email = %s OR subject = %s OR message = %s ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $search_term, $search_term, $search_term, $search_term, $orderby, $order, $per_page, $paged ), ARRAY_A );
+			$this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE recipient = %s OR email = %s OR subject = %s OR message = %s ORDER BY %s %s LIMIT %d OFFSET %d", $table_name, $search_term, $search_term, $search_term, $search_term, $orderby, $order, $per_page, $paged ), ARRAY_A ); // CPCS: %i supported since WP 6.2.
 
 			$this->set_pagination_args( array(
 				'total_items' => $search_items,
@@ -508,7 +511,7 @@ class KTS_Email_Logs extends WP_List_Table {
 				# Verify nonce
 				$nonce = sanitize_key( $_GET['_wpnonce'] );
 				if ( ! wp_verify_nonce( $nonce, $action ) ) {
-					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a nonce.', 'kts-email-logs' ) . '</p></div>';
+					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'That action is not possible without a nonce.', 'kts-email-logs' ) . '</p></div>';
 					return;
 				}
 
@@ -561,7 +564,7 @@ class KTS_Email_Logs extends WP_List_Table {
 						);
 					}
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . str_replace( __( 'log', 'kts-email-logs' ), __( 'email', 'kts-email-logs' ), $count ) . ' resent.</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . str_replace( esc_html__( 'log', 'kts-email-logs' ), esc_html__( 'email', 'kts-email-logs' ), $count ) . ' resent.</p></div>';
 					break;
 
 				default:
