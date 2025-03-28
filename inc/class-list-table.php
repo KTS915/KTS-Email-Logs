@@ -70,9 +70,7 @@ class KTS_Email_Logs extends WP_List_Table {
 	public static function get_selected_logs( $ids ) {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
-		$count = count( $ids );
-		$imploded = implode( ',', array_fill( 0, $count, '%d' ) );
-
+		$imploded = implode( ',', array_map( 'absint', $ids ) ); 
 		$sql = $wpdb->prepare( "SELECT * FROM %i WHERE message_id IN ($imploded)", $table_name );
 
 		return $wpdb->get_results( $sql, ARRAY_A );
@@ -116,7 +114,7 @@ class KTS_Email_Logs extends WP_List_Table {
 		global $wpdb;		
 		$table_name = $wpdb->prefix . 'kts_email_logs';
 
-		$sql = "SELECT COUNT(*) FROM `$table_name`";
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM %i", $table_name );
 
 		return $wpdb->get_var( $sql );
 	}
@@ -424,7 +422,7 @@ class KTS_Email_Logs extends WP_List_Table {
         # Prepare query params, as usual current page, order by and order direction
 		$paged = isset( $_GET['paged'] ) ? ( $per_page * max( 0, absint( $_GET['paged'] ) - 1 ) ) : 0;
 
-		$orderby = ( isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? wp_unslash( $_GET['orderby'] ) : 'message_id';
+		$orderby = ( isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? sanitize_sql_orderby( wp_unslash( $_GET['orderby'] ) ) : 'message_id';
 
 		$order = ( isset( $_GET['order'] ) && in_array( $_GET['order'], array('asc', 'desc') ) ) ? wp_unslash( $_GET['order'] ) : 'desc';
 
