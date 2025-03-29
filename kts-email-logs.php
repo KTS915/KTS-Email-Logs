@@ -307,7 +307,7 @@ function kts_csv_email_logs() {
 
 	}
 
-	fclose( $file );
+	fclose( $file ); // CPCS: Ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose because the file is being created for download only.
 	exit;
 }
 
