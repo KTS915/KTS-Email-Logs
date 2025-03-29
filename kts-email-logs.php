@@ -212,9 +212,9 @@ function kts_csv_email_logs() {
 	}
 
 	# Verify nonce
-	$nonce = sanitize_key( $_GET['kts_email_logs_nonce'] );
+	$nonce = isset( $_GET['kts_email_logs_nonce'] ) ? sanitize_key( $_GET['kts_email_logs_nonce'] ) : '';
 	if ( ! wp_verify_nonce( $nonce, 'kts_email_logs_nonce' ) ) {
-		echo '<div class="notice notice-error is-dismissible"><p>' . __( 'That action is not possible without a suitable nonce.', 'kts-email-logs' ) . '</p></div>';
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'That action is not possible without a suitable nonce.', 'kts-email-logs' ) . '</p></div>';
 		return;
 	}
 
@@ -236,7 +236,7 @@ function kts_csv_email_logs() {
 	header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' ); 
 	header( 'Content-Description: File Transfer' ); 
 	header( 'Content-type: text/csv' );
-	header( 'Content-Disposition: attachment; filename="email-error-logs-' . date( 'Y-m-d' ) . '.csv"' );
+	header( 'Content-Disposition: attachment; filename="email-error-logs-' . wp_date( 'Y-m-d' ) . '.csv"' );
 	header( 'Pragma: public' );
 	header( 'Expires: 0' );
 
@@ -314,13 +314,13 @@ function kts_csv_email_logs() {
 
 /* PARSE HTML EMAIL MESSAGE */
 function kts_parse_html_message( $message ) {
-	return strip_tags( str_replace( ['</p>', '<br>'], ['</p> ', ' '], wp_specialchars_decode( $message, ENT_QUOTES ) ) );
+	return wp_strip_all_tags( str_replace( ['</p>', '<br>'], ['</p> ', ' '], wp_specialchars_decode( $message, ENT_QUOTES ) ) );
 }
 add_filter( 'email_message', 'kts_parse_html_message' );
 
 function kts_parse_html_message_in_csv_export( $message ) {
 	preg_match_all( '~<p>(.*?)<\/p>~s', wp_specialchars_decode( $message, ENT_QUOTES ), $match );
-	return strip_tags( implode( ' ', $match[1] ) );
+	return wp_strip_all_tags( implode( ' ', $match[1] ) );
 }
 add_filter( 'email_message_csv', 'kts_parse_html_message_in_csv_export' );
 
@@ -353,7 +353,7 @@ function kts_delete_old_email_logs() {
 	$time_ago = time() - $storage;
 
 	# $wpdb->query does not sanitize data, so use $wpdb->prepare
-	$wpdb->query( $wpdb->prepare( "DELETE FROM $table_name WHERE sent < %d", $time_ago ) );
+	$wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE sent < %d", $table_name, $time_ago ) ); // CPCS: %i supported since WP 6.2.
 }
 add_action( 'kts_email_logs_hook', 'kts_delete_old_email_logs' );
 
